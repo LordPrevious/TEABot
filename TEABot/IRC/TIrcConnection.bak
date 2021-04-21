@@ -1,0 +1,501 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace TEABot.IRC
+{
+    /// <summary>
+    /// IRC server connection establishing and handling, lifted from the old SimpleIrcBot and slightly adapted
+    /// </summary>
+    class TIrcConnection
+    {
+        #region Constructors
+
+        public TIrcConnection()
+        {
+            mSendBuffer = new byte[cBufferSize];
+            mReceiveBuffer = new byte[cBufferSize];
+            mSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            mChannelList = new List<string>();
+
+            mRawMessageRefs = new List<IrcRawMessage>();
+
+            mReceivedData = String.Empty;
+        }
+
+        #endregion
+
+        #region Private data
+
+        private Socket mSocket;
+        private byte[] mSendBuffer, mReceiveBuffer;
+        private string mReceivedData;
+
+        private string mHostname;
+        private ushort mPort;
+        private string mUsername;
+        private bool mConnected, mConnecting;
+
+        private List<IrcRawMessage> mRawMessageRefs;
+
+        private static readonly string cMessageDelimiter = "\r\n";
+        private static readonly string[] cMessageDelimiterArray = new string[] { cMessageDelimiter };
+
+        private static readonly int cBufferSize = 1024;
+
+        #endregion
+
+        #region Private functions
+
+        private bool CheckConnected()
+        {
+            if (!mConnected)
+                return false;
+
+            if (!mSocket.Connected)
+            {
+                mConnected = false;
+                RaiseError(IrcConnectionError.ConnectionLost, "Lost connection.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private void ProcessIncomingMessage(string rawmessage)
+        {
+            var message = TIrcMessage.Parse(rawmessage);
+
+            var command = message.Command;
+
+            if (command.IsResponse)
+            {
+                switch (command.Response)
+                {
+                    case TIrcResponseCode.RPL_WELCOME:
+                        // TODO: Stop timeout / end login phase
+                        RaiseLogin(mHostname, true);
+                        break;
+                }
+            }
+            else if (command.IsCommand)
+            {
+                switch (command.Command)
+                {
+                    case TIrcCommand.JOIN:
+                        if (message.Params.Middles.Count > 0)
+                        {
+                            RaiseJoin(message.Params.Middles[0]);
+                        }
+                        break;
+                    case TIrcCommand.PART:
+                        if (message.Params.Middles.Count > 0)
+                        {
+                            RaisePart(message.Params.Middles[0]);
+                        }
+                        break;
+                    case TIrcCommand.PRIVMSG:
+                        if (message.Params.Middles.Count >= 1)
+                        {
+                            RaiseMessage(IrcDirection.ServerToClient, message.Params.Middles[0],
+                                message.Prefix,
+                                String.Join(" ", message.Params.Middles.Skip(1).Append(message.Params.Trailing)));
+                        }
+                        break;
+                    case TIrcCommand.NOTICE:
+                        if (message.Params.Middles.Count >= 1)
+                        {
+                            RaiseNotice(IrcDirection.ServerToClient, message.Params.Middles[0],
+                                message.Prefix,
+                                String.Join(" ", message.Params.Middles.Skip(1).Append(message.Params.Trailing)));
+                        }
+                        break;
+                    case TIrcCommand.ERROR:
+                        RaiseError(IrcConnectionError.ServerError, message.Params.ToString());
+                        break;
+                    case TIrcCommand.PING:
+                        RaisePing(IrcDirection.ServerToClient,
+                            String.Join(" ", message.Params.Middles.Append(message.Params.Trailing)));
+                        // send the same params back
+                        Send(new TIrcMessage(TIrcCommand.PONG, message.Params.Middles, message.Params.Trailing));
+                        break;
+                    case TIrcCommand.PONG:
+                        RaisePong(IrcDirection.ServerToClient,
+                            String.Join(" ", message.Params.Middles.Append(message.Params.Trailing)));
+                        break;
+                }
+            }
+        }
+
+        private void ProcessOutgoingMessage(TIrcMessage message)
+        {
+            var command = message.Command;
+
+            if (command.IsCommand)
+            {
+                switch (command.Command)
+                {
+                    case TIrcCommand.PRIVMSG:
+                        if (message.Params.Middles.Count >= 1)
+                        {
+                            RaiseMessage(IrcDirection.ClientToServer, message.Params.Middles[0],
+                                message.Prefix,
+                                String.Join(" ", message.Params.Middles.Skip(1).Append(message.Params.Trailing)));
+                        }
+                        break;
+                    case TIrcCommand.NOTICE:
+                        if (message.Params.Middles.Count >= 1)
+                        {
+                            RaiseNotice(IrcDirection.ClientToServer, message.Params.Middles[0],
+                                message.Prefix,
+                                String.Join(" ", message.Params.Middles.Skip(1).Append(message.Params.Trailing)));
+                        }
+                        break;
+                    case TIrcCommand.PING:
+                        RaisePing(IrcDirection.ClientToServer,
+                            String.Join(" ", message.Params.Middles.Append(message.Params.Trailing)));
+                        break;
+                }
+            }
+        }
+
+        private void connectCallback(IAsyncResult ar)
+        {
+            mConnected = true;
+            mConnecting = false;
+            RaiseConnected(String.Format("{0}:{1}", mHostname, mPort));
+
+            BeginReceive();
+        }
+
+        private void sendCallback(IAsyncResult ar)
+        {
+            var length = mSocket.EndSend(ar);
+
+            var rawMsg = ar.AsyncState as IrcRawMessage;
+
+            if (rawMsg == null)
+            {
+                RaiseError(IrcConnectionError.SendingFailed, "*Unknown raw message*");
+                return;
+            }
+
+            mRawMessageRefs.Remove(rawMsg);
+
+            if (length != rawMsg.Message.Length)
+            {
+                RaiseError(IrcConnectionError.SendingFailed, rawMsg.Message);
+                return;
+            }
+
+            RaiseRaw(IrcDirection.ClientToServer, rawMsg.Message);
+        }
+
+        private void receiveCallback(IAsyncResult ar)
+        {
+            if (!Connected) return;
+
+            var length = mSocket.EndReceive(ar);
+
+            if (length > 0)
+            {
+                var newData = Encoding.UTF8.GetString(mReceiveBuffer, 0, length);
+
+                /* received data doesn't necessarily split at new lines, but the IRC protocol
+                 * uses one line per message. Thus, we split by new lines (CRLF), and remember unfinished
+                 * messages so we can process them once we receive the rest */
+
+                var fullData = mReceivedData + newData;
+                var splitData = fullData.Split(cMessageDelimiterArray, StringSplitOptions.RemoveEmptyEntries);
+
+                var hasHalfMessage = !(fullData.EndsWith(cMessageDelimiter));
+
+                var breakAt = (hasHalfMessage ? (splitData.Length - 1) : splitData.Length);
+                if (splitData.Length > 0)
+                {
+                    for (var i = 0; i < breakAt; i++)
+                    {
+                        var message = splitData[i];
+
+                        // raise before processing, so automatic responses won't be logged before the incoming message
+                        RaiseRaw(IrcDirection.ServerToClient, message);
+
+                        ProcessIncomingMessage(message);
+                    }
+                }
+
+                if (hasHalfMessage)
+                {
+                    mReceivedData = splitData.Last();
+                }
+                else
+                {
+                    mReceivedData = String.Empty;
+                }
+            }
+            else
+            {
+                Thread.Sleep(100);
+            }
+
+            BeginReceive();
+        }
+
+        private void BeginReceive()
+        {
+            try
+            {
+                mSocket.BeginReceive(mReceiveBuffer, 0, mReceiveBuffer.Length, SocketFlags.None, receiveCallback, null);
+            }
+            catch (SocketException ex)
+            {
+                mConnected = false;
+                RaiseError(IrcConnectionError.SendingFailed, String.Format("{0}: {1}", ex.GetType(), ex.Message));
+            }
+        }
+
+        #endregion
+
+        #region Public functions
+
+        public void Connect(string hostname, ushort port)
+        {
+            if (mConnecting || Connected) return;
+
+            mConnecting = true;
+
+            mHostname = hostname;
+            mPort = port;
+
+            try
+            {
+                mSocket.BeginConnect(new DnsEndPoint(hostname, port), connectCallback, null);
+            }
+            catch (SocketException)
+            {
+                mConnected = false;
+                RaiseError(IrcConnectionError.ConnectionFailed, "Unable to connect.");
+                mConnecting = false;
+            }
+        }
+
+        public void Disconnect()
+        {
+            mConnected = mConnecting = false;
+            mSocket.Close();
+
+            RaiseDisconnected(mHostname);
+        }
+
+        public void Login(string username, string password)
+        {
+            if (!Connected) return;
+
+            mUsername = username;
+
+            SendRaw(String.Format("PASS {0}{2}USER {1}{2}NICK {1}", password, username, cMessageDelimiter));
+
+            // TODO: Timeout/fail
+        }
+
+        public void Join(string channel)
+        {
+            if (!Connected) return;
+
+            SendRaw(String.Format("JOIN {0}", channel));
+        }
+
+        public void Part(string channel)
+        {
+            if (!Connected) return;
+
+            SendRaw(String.Format("PART {0}", channel));
+        }
+
+        public void SendRaw(string rawmessage)
+        {
+            if (!rawmessage.EndsWith(cMessageDelimiter))
+            {
+                SendRaw(rawmessage + cMessageDelimiter);
+                return;
+            }
+
+            if (rawmessage.Length > cBufferSize)
+            {
+                RaiseError(IrcConnectionError.MessageTooLong, rawmessage);
+                return;
+            }
+
+            var lenght = Encoding.UTF8.GetBytes(rawmessage, 0, rawmessage.Length, mSendBuffer, 0);
+
+            var rawMsg = new IrcRawMessage(rawmessage);
+            mRawMessageRefs.Add(rawMsg);
+
+            mSocket.BeginSend(mSendBuffer, 0, lenght, SocketFlags.None, sendCallback, rawMsg);
+        }
+
+        public void Send(TIrcMessage message)
+        {
+            SendRaw(message.ToString());
+
+            ProcessOutgoingMessage(message);
+        }
+
+        #endregion
+
+        #region Properties
+
+        public List<string> ChannelList
+        {
+            get
+            {
+                return new List<string>(mChannelList);
+            }
+        }
+        private List<string> mChannelList;
+
+        public bool Connected
+        {
+            get
+            {
+                return CheckConnected();
+            }
+        }
+
+        #endregion
+
+        #region Events
+
+        public delegate void RawMessageHandler(object sender, IrcDirection direction, string rawmessage);
+        public event RawMessageHandler OnRaw;
+        private void RaiseRaw(IrcDirection direction, string rawmessage)
+        {
+            if (OnRaw != null)
+                OnRaw(this, direction, rawmessage);
+        }
+
+        public delegate void MessageHandler(object sender, IrcDirection direction, string channel, TIrcMessage.MessagePrefix nickname, string message);
+        public event MessageHandler OnMessage;
+        private void RaiseMessage(IrcDirection direction, string channel, TIrcMessage.MessagePrefix nickname, string message)
+        {
+            if (OnMessage != null)
+                OnMessage(this, direction, channel, nickname, message);
+        }
+        public event MessageHandler OnNotice;
+        private void RaiseNotice(IrcDirection direction, string channel, TIrcMessage.MessagePrefix nickname, string message)
+        {
+            if (OnNotice != null)
+                OnNotice(this, direction, channel, nickname, message);
+        }
+
+        public delegate void IrcErrorHandler(object sender, IrcConnectionError error, string message);
+        public event IrcErrorHandler OnError;
+        private void RaiseError(IrcConnectionError error, string message)
+        {
+            if (OnError != null)
+                OnError(this, error, message);
+        }
+
+        public delegate void ConnectedHandler(object sender, string host);
+        public event ConnectedHandler OnConnected;
+        private void RaiseConnected(string host)
+        {
+            if (OnConnected != null)
+                OnConnected(this, host);
+        }
+        public event ConnectedHandler OnDisconnected;
+        private void RaiseDisconnected(string host)
+        {
+            if (OnDisconnected != null)
+                OnDisconnected(this, host);
+        }
+
+        public delegate void LoginHandler(object sender, string host, bool successful);
+        public event LoginHandler OnLogin;
+        private void RaiseLogin(string host, bool successful)
+        {
+            if (OnLogin != null)
+                OnLogin(this, host, successful);
+        }
+
+        public delegate void JoinPartHandler(object sender, string channel);
+        public event JoinPartHandler OnJoin;
+        private void RaiseJoin(string channel)
+        {
+            if (OnJoin != null)
+                OnJoin(this, channel);
+        }
+        public event JoinPartHandler OnPart;
+        private void RaisePart(string channel)
+        {
+            if (OnPart != null)
+                OnPart(this, channel);
+        }
+
+        public delegate void PingPongHandler(object sender, IrcDirection direction, string parameters);
+        public event PingPongHandler OnPing;
+        private void RaisePing(IrcDirection direction, string parameters)
+        {
+            if (OnPing != null)
+                OnPing(this, direction, parameters);
+        }
+        public event PingPongHandler OnPong;
+        private void RaisePong(IrcDirection direction, string parameters)
+        {
+            if (OnPong != null)
+                OnPong(this, direction, parameters);
+        }
+
+        #endregion
+
+        # region Convenience enums
+        public enum IrcConnectionError
+        {
+            ConnectionFailed,
+            ConnectionLost,
+            LoginFailed,
+            MessageTooLong,
+            SendingFailed,
+            ReceivingFailed,
+            ServerError,
+        }
+
+        public enum IrcDirection
+        {
+            ServerToClient,
+            ClientToServer,
+            None,
+        }
+        #endregion
+        #region Convenience classes
+
+        /// <summary>
+        /// Wraps a raw message string so we have an instance with a unique ref,
+        /// rather than possibly reused string refs
+        /// </summary>
+        public class IrcRawMessage
+        {
+            #region Constructors
+
+            public IrcRawMessage(string message)
+            {
+                Message = message;
+            }
+
+            #endregion
+
+            #region Properties
+
+            public string Message { get; private set; }
+
+            #endregion
+        }
+        #endregion
+    }
+}

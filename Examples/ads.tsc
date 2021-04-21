@@ -1,0 +1,27 @@
+script Ads
+description Periodically drops an ad for your other awesome platforms!
+# Execute periodically after an interval given in seconds
+periodic 3600
+# alternate manual command, does not affect periodic execution
+command ad
+# no parameters (optional parameters would be possible, but not required ones)
+
+##################################################
+
+# jump to a randomly picked label
+leap @twitch @youtube @twitter
+
+# jump label
+@twitch
+# write message
+write Visit my Twitch channel https://www.twitch.tv/...
+# end script execution
+end
+
+@youtube
+write Missed a stream? Check out the VODs on my YouTube channel! https://www.youtube.com/channel/...
+end
+
+@twitter
+write Get instant notifications whenever I get live by following me on Twitter! https://twitter.com/...
+end

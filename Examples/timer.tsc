@@ -1,0 +1,56 @@
+# Script name
+script Tea Timer
+# Script description
+description Starts a tea timer, notifying the user after a couple minutes
+# Chat command for script execution
+command timer
+
+##################################################
+
+# Parameter specification
+optional duration
+# Type of this parameter
+type number
+# default value for this optional parameter
+default 5
+# Description for this parameter
+description Timer duration in minutes, after which the user is to be notified
+
+##################################################
+
+# copy argument value into named variable
+# arguments can be accessed via ? prefix
+# named variables are accessed via ! prefix
+store !durationMinutes ?duration
+
+# enforce a range on a variable's value, ensuring it is within
+range !durationMinutes 1 30
+
+# Multiply !durationMinutes by 60 and store the result in !durationSeconds
+multiply !durationSeconds !durationMinutes 60
+
+# Add static text to output buffer
+write I've set a timer for 
+# Add variable value to output buffer
+print !durationMinutes
+# Additional static text
+write  minutes, @
+# Add context value to output buffer
+# context values can be accessed via $ prefix
+print $sender
+# More static text
+write !
+
+# send the contents of the output buffer and reset it
+flush
+
+# Sleep for a number of seconds
+sleep !durationSeconds
+
+# output a delayed message
+write @
+print $sender
+write , don't forget about your tea!
+
+# End of script (optional) - non-empty output buffer will automatically be flushed
+end

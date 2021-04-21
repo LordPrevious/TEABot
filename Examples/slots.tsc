@@ -1,0 +1,38 @@
+script Slots
+description Take a spin at the slot machine!
+command slots
+# no parameters
+
+##################################################
+
+# generate a random value within the given range and store it in a named variable
+randomize !slot1 1 9
+randomize !slot2 1 9
+randomize !slot3 1 9
+
+write And the slots rolled! [
+print !slot1
+write ,
+print !slot2
+write ,
+print !slot3
+write ] 
+
+# Check if !slot1, !slot2 and !slot3 are equal, if so, store 1 in !match, otherwise, store 0
+equal !match !slot1 !slot2 !slot3
+
+# Jump to label @winner if !match is non-zero
+jump @winner !match
+
+# otherwise, proceed linearly
+write What a shame!
+
+# end execution, flush remaining buffer, do not proceed
+end
+
+# jump label
+@winner
+
+write That's so lucky! Did you cheat?
+
+end
