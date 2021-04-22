@@ -231,7 +231,37 @@ namespace TEABot.IRC
             internal static MessageTags Parse(string a_rawTags)
             {
                 // TODO
-                return null;
+                throw new NotImplementedException("Too soon");
+            }
+
+            /// <summary>
+            /// Unescape a tag value according to the IRC extension specification
+            /// </summary>
+            /// <param name="a_escapedValue">The escaped value</param>
+            /// <returns>The corresponding plain (unescaped) value</returns>
+            internal static string UnescapeValue(string a_escapedValue)
+            {
+                /* 
+                 * IRC extension tag value escaping rules:
+                 *  plain character - escape sequence
+                 *  @";" - @"\:"
+                 *  @" " - @"\s"
+                 *  @"\" - @"\\"
+                 *  "\r" - @"\r"
+                 *  "\n" - @"\n"
+                 */
+
+                throw new NotImplementedException("Too soon");
+            }
+
+            /// <summary>
+            /// Escape a tag value according to the IRC extension specifications
+            /// </summary>
+            /// <param name="a_plainValue">The plain (unescaped) value</param>
+            /// <returns>The corresponding escaped value</returns>
+            internal static string EscapeValue(string a_plainValue)
+            {
+                throw new NotImplementedException("Too soon");
             }
 
             public override string ToString()
@@ -239,6 +269,12 @@ namespace TEABot.IRC
                 // TODO
                 return String.Empty;
             }
+
+            /// <summary>
+            /// Dictionary mapping tag names to tag values
+            /// </summary>
+            public IReadOnlyDictionary<string, string> Tags { get { return mTags; } }
+            private Dictionary<string, string> mTags = new Dictionary<string, string>();
         }
 
         /// <summary>
