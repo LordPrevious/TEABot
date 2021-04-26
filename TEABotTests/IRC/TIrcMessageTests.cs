@@ -1,4 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Collections.Generic;
 using TEABot.IRC;
 
 namespace TEABotTests.IRC
@@ -178,6 +180,36 @@ namespace TEABotTests.IRC
             var escapedInvalid = @"it\swas\dropped\shere";
             var plainInvalid = TIrcMessage.MessageTags.UnescapeValue(escapedInvalid);
             Assert.AreEqual("it wasdropped here", plainInvalid);
+        }
+
+        [TestMethod]
+        public void MessageTags_ToString()
+        {
+            // empty tags
+            var tagsEmpty = new TIrcMessage.MessageTags();
+            var stringEmpty = tagsEmpty.ToString();
+            Assert.AreEqual(String.Empty, stringEmpty);
+
+            // single tag
+            var valuesSingle = new Dictionary<String, String>
+            {
+                { "tagName", "tagValue" }
+            };
+            var tagsSingle = new TIrcMessage.MessageTags(valuesSingle);
+            var stringSingle = tagsSingle.ToString();
+            Assert.AreEqual("tagName=tagValue", stringSingle);
+
+            // multiple tags & escaping
+            var valuesMulti = new Dictionary<String, String>
+            {
+                { "tagName", "tagValue" },
+                { "anotherTag", "something" },
+                { "third", "other thing" }
+            };
+            var tagsMulti = new TIrcMessage.MessageTags(valuesMulti);
+            var stringMultie = tagsMulti.ToString();
+            // sequence is ordered ascending by key name
+            Assert.AreEqual(@"anotherTag=something;tagName=tagValue;third=other\sthing", stringMultie);
         }
     }
 }
