@@ -192,6 +192,13 @@ namespace TEABot.IRC
         {
             var sb = new StringBuilder();
 
+            if (Tags != null)
+            {
+                sb.Append(sTagHead);
+                sb.Append(Tags.ToString());
+                sb.Append(sTagTail);
+            }
+
             if (Prefix != null)
             {
                 sb.Append(sPrefixHead);
@@ -230,15 +237,195 @@ namespace TEABot.IRC
             /// <returns>The parsed tags or null on parse failure</returns>
             internal static MessageTags Parse(string a_rawTags)
             {
-                // TODO
-                return null;
+                var result = new MessageTags();
+
+                // split into "key=value" pairs
+                var tagSplit = a_rawTags.Split(sTagSeparatorArray, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var rawKeyValue in tagSplit)
+                {
+                    // split into key and value (value may contain separator character, key must not)
+                    var keySplit = rawKeyValue.Split(sValueSeparatorArray, 2);
+                    if ((keySplit.Length == 2) && !String.IsNullOrEmpty(keySplit[0]))
+                    {
+                        if (String.IsNullOrEmpty(keySplit[1]))
+                        {
+                            // empty value - discard from map in case we got multiple occurrences
+                            result.mTags.Remove(keySplit[0]);
+                        }
+                        else
+                        {
+                            // add or overwrite value
+                            result.mTags[keySplit[0]] = UnescapeValue(keySplit[1]);
+                        }
+                    }
+                }
+
+                return result;
+            }
+
+            /// <summary>
+            /// Default constructor
+            /// </summary>
+            public MessageTags() {}
+
+            /// <summary>
+            /// Create a message tags object with copies of the given tags
+            /// </summary>
+            /// <param name="a_tags">The tags to copy from</param>
+            public MessageTags(IDictionary<String, String> a_tags)
+            {
+                foreach (var sourceTag in a_tags)
+                {
+                    mTags.Add(sourceTag.Key, sourceTag.Value);
+                }
+            }
+
+            private static readonly char sTagSeparator = ';';
+            private static readonly char[] sTagSeparatorArray = new char[] { sTagSeparator };
+            private static readonly char sValueSeparator = '=';
+            private static readonly char[] sValueSeparatorArray = new char[] { sValueSeparator };
+
+            /// <summary>
+            /// Unescape a tag value according to the IRC extension specification
+            /// </summary>
+            /// <param name="a_escapedValue">The escaped value</param>
+            /// <returns>The corresponding plain (unescaped) value</returns>
+            internal static string UnescapeValue(string a_escapedValue)
+            {
+                /* 
+                 * IRC extension tag value escaping rules:
+                 *  plain character - escape sequence
+                 *  @";" - @"\:"
+                 *  @" " - @"\s"
+                 *  @"\" - @"\\"
+                 *  "\r" - @"\r"
+                 *  "\n" - @"\n"
+                 */
+
+                var result = new StringBuilder();
+
+                // set to true when the escape character has been encountered
+                var bIsEscapeSequence = false;
+
+                // iterate over escaped string
+                foreach (var currentChar in a_escapedValue)
+                {
+                    if (bIsEscapeSequence)
+                    {
+                        // clear flag
+                        bIsEscapeSequence = false;
+                        // check for escape sequence
+                        switch (currentChar)
+                        {
+                        case ':':
+                            result.Append(';');
+                            break;
+                        case 's':
+                            result.Append(' ');
+                            break;
+                        case '\\':
+                            result.Append('\\');
+                            break;
+                        case 'r':
+                            result.Append('\r');
+                            break;
+                        case 'n':
+                            result.Append('\n');
+                            break;
+                        default:
+                            // invalid escape sequence, drop escape character
+                            result.Append(currentChar);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        // check for escape character
+                        if (currentChar == '\\')
+                        {
+                            // set escape sequence flag
+                            bIsEscapeSequence = true;
+                        }
+                        else
+                        {
+                            // take character as-is
+                            result.Append(currentChar);
+                        }
+                    }
+                }
+
+                return result.ToString();
+            }
+
+            /// <summary>
+            /// Escape a tag value according to the IRC extension specifications
+            /// </summary>
+            /// <param name="a_plainValue">The plain (unescaped) value</param>
+            /// <returns>The corresponding escaped value</returns>
+            internal static string EscapeValue(string a_plainValue)
+            {
+                var result = new StringBuilder();
+
+                // iterate over string to escape
+                foreach (var currentChar in a_plainValue)
+                {
+                    // check for characters that need to be escaped
+                    switch (currentChar)
+                    {
+                    case ';':
+                        result.Append(@"\:");
+                        break;
+                    case ' ':
+                        result.Append(@"\s");
+                        break;
+                    case '\\':
+                        result.Append(@"\\");
+                        break;
+                    case '\r':
+                        result.Append(@"\r");
+                        break;
+                    case '\n':
+                        result.Append(@"\n");
+                        break;
+                    default:
+                        // take character as-is
+                        result.Append(currentChar);
+                        break;
+                    }
+                }
+
+                return result.ToString();
             }
 
             public override string ToString()
             {
-                // TODO
-                return String.Empty;
+                var result = new List<String>();
+
+                var sb = new StringBuilder();
+                // order keys so we can expect a specific sequence in unit tests
+                var orderedKeys = mTags.Keys.OrderBy(key => key).ToArray();
+                foreach (var currentKey in orderedKeys)
+                {
+                    var currentValue = mTags[currentKey];
+                    if (!String.IsNullOrEmpty(currentValue))
+                    {
+                        sb.Clear();
+                        sb.Append(currentKey);
+                        sb.Append('=');
+                        sb.Append(EscapeValue(currentValue));
+                        result.Add(sb.ToString());
+                    }
+                }
+
+                return String.Join(";", result);
             }
+
+            /// <summary>
+            /// Dictionary mapping tag names to tag values
+            /// </summary>
+            public IReadOnlyDictionary<string, string> Tags { get { return mTags; } }
+            private Dictionary<string, string> mTags = new Dictionary<string, string>();
         }
 
         /// <summary>
