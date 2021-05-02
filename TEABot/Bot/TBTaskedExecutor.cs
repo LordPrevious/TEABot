@@ -57,16 +57,8 @@ namespace TEABot.Bot
         public TBTaskedExecutor(CancellationToken a_ct, TBChannel a_channel, TSCompiledScript a_script, string a_arguments, string a_sender)
             : base(a_script, a_arguments)
         {
-            if (a_ct == null)
-            {
-                throw new ArgumentNullException("a_ct");
-            }
-            if (a_channel == null)
-            {
-                throw new ArgumentNullException("a_channel");
-            }
             mCt = a_ct;
-            mChannel = a_channel;
+            mChannel = a_channel ?? throw new ArgumentNullException("a_channel");
             mSender = a_sender;
         }
 
