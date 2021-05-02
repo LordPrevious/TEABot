@@ -1,6 +1,7 @@
 name: Build and test dotnet
 
-on: [push]
+on:
+  push:
     paths-ignore:
       - '**.md'
 
