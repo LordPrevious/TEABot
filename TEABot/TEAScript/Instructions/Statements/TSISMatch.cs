@@ -23,7 +23,7 @@ namespace TEABot.TEAScript.Instructions.Statements
         /// <summary>
         /// String to match the value against
         /// </summary>
-        private String mStringToMatch = String.Empty;
+        private string mStringToMatch = String.Empty;
 
         protected override bool Parse(string a_instructionArguments)
         {

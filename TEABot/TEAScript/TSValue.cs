@@ -25,7 +25,7 @@ namespace TEABot.TEAScript
         /// <summary>
         /// Empty value to use as default in automatic generation of dictionary entries
         /// </summary>
-        public static readonly TSValue Empty = new TSValue(String.Empty, 0L);
+        public static readonly TSValue Empty = new(String.Empty, 0L);
 
         /// <summary>
         /// Explicity set each field.
@@ -45,8 +45,7 @@ namespace TEABot.TEAScript
         public TSValue(string a_textValue)
         {
             TextValue = a_textValue;
-            long numerical;
-            if (Int64.TryParse(a_textValue, out numerical))
+            if (Int64.TryParse(a_textValue, out long numerical))
             {
                 NumericalValue = numerical;
             }
