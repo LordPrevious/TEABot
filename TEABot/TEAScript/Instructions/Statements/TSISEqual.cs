@@ -62,7 +62,7 @@ namespace TEABot.TEAScript.Instructions.Statements
         private long CalculateResult(TSExecutionContext a_context)
         {
             // get numerical values via context
-            var numberArguments = mArguments.Select(a => a.GetValue(a_context)).ToArray();
+            var numberArguments = mArguments.Select(a => a.GetValue(a_context).NumericalValue).ToArray();
             // operate on the actual values
             switch (mArguments.Length)
             {

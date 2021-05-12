@@ -25,6 +25,11 @@ namespace TEABot.TEAScript
         public TSValueDictionary Values { get; } = new TSValueDictionary();
 
         /// <summary>
+        /// A storage provider for data persistence.
+        /// </summary>
+        public ITSStorage Storage { get; set; } = null;
+
+        /// <summary>
         /// A broadcaster to send execution messages to.
         /// </summary>
         public TSBroadcaster Broadcaster { get; set; } = null;
@@ -34,7 +39,11 @@ namespace TEABot.TEAScript
         /// </summary>
         public void Flush()
         {
-            Broadcaster?.Flush(Output.ToString());
+            var currentOutput = Output.ToString();
+            if (!String.IsNullOrWhiteSpace(currentOutput))
+            {
+                Broadcaster?.Flush(currentOutput);
+            }
             Output.Clear();
         }
     }

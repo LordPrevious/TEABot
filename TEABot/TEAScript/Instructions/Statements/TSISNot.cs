@@ -19,7 +19,7 @@ namespace TEABot.TEAScript.Instructions.Statements
         /// <summary>
         /// The value to store
         /// </summary>
-        private ITSValueArgument mSourceValue = new TSConstantValueArgument(0L);
+        private ITSValueArgument mSourceValue = new TSConstantNumberArgument(0L);
 
         protected override bool Parse(string a_instructionArguments)
         {

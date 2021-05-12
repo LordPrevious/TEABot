@@ -21,12 +21,12 @@ namespace TEABot.TEAScript.Instructions.Statements
         /// <summary>
         /// One bound of the range to limit the value to
         /// </summary>
-        private ITSValueArgument mFirstLimit = new TSConstantValueArgument(0L);
+        private ITSValueArgument mFirstLimit = new TSConstantNumberArgument(0L);
 
         /// <summary>
         /// The other bound of the range to limit the value to
         /// </summary>
-        private ITSValueArgument mSecondLimit = new TSConstantValueArgument(0L);
+        private ITSValueArgument mSecondLimit = new TSConstantNumberArgument(0L);
 
         protected override bool Parse(string a_instructionArguments)
         {

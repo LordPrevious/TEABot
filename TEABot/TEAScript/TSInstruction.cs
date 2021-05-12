@@ -76,7 +76,7 @@ namespace TEABot.TEAScript
         /// </summary>
         /// <param name="a_instructionArguments">Original instruction arguments</param>
         /// <returns>The separated words of the arguments string.</returns>
-        protected string[] SplitWordsArguments(string a_instructionArguments)
+        protected static string[] SplitWordsArguments(string a_instructionArguments)
         {
             return a_instructionArguments.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         }
@@ -107,8 +107,7 @@ namespace TEABot.TEAScript
             var words = SplitWordsArguments(a_instructionArguments);
             bool result = true;
             a_numbers = words.Select(w => {
-                long number;
-                if (!Int64.TryParse(w, out number))
+                if (!Int64.TryParse(w, out long number))
                 {
                     ParsingBroadcaster?.Error("Cannot parse \"{0}\" as a number.", w);
                     number = 0L;
@@ -125,29 +124,35 @@ namespace TEABot.TEAScript
         /// </summary>
         /// <param name="a_instructionArguments">Original instruction arguments</param>
         /// <param name="a_valueArgument">The first value of the arguments</param>
+        /// <param name="a_allowWildcard">True to allow wildcards with named value arguments</param>
         /// <returns>True on successful parsing.</returns>
-        protected bool SingleValueArgument(string a_instructionArguments, out ITSValueArgument a_valueArgument)
+        protected bool SingleValueArgument(string a_instructionArguments, out ITSValueArgument a_valueArgument, bool a_allowWildcard = false)
         {
             var firstWord = SingleWordArgument(a_instructionArguments);
 
-            long number;
             if (TSConstants.ValuePrefixes.Any(p => p == firstWord[0]))
             {
                 // got a value reference
-                if (new TSValidator(ParsingBroadcaster).IsValueName(firstWord))
+                if (new TSValidator(ParsingBroadcaster).IsValueName(firstWord, a_allowWildcard))
                 {
                     a_valueArgument = new TSNamedValueArgument(firstWord);
                     return true;
                 }
             }
-            // must be a number otherwise
-            else if (SingleNumberArgument(firstWord, out number))
+            else if (firstWord.EndsWith(TSConstants.StringConstantPrefix))
             {
-                a_valueArgument = new TSConstantValueArgument(number);
+                // single-word string constant, drop prefix
+                a_valueArgument = new TSConstantStringArgument(firstWord[1..]);
+                return true;
+            }
+            // must be a number otherwise
+            else if (SingleNumberArgument(firstWord, out long number))
+            {
+                a_valueArgument = new TSConstantNumberArgument(number);
                 return true;
             }
             // error: fallback to 0 and mark parse failure
-            a_valueArgument = new TSConstantValueArgument(0L);
+            a_valueArgument = new TSConstantNumberArgument(0L);
             return false;
         }
 
@@ -162,7 +167,6 @@ namespace TEABot.TEAScript
             var words = SplitWordsArguments(a_instructionArguments);
             bool result = true;
             a_valueArguments = words.Select<string, ITSValueArgument>(w => {
-                long number;
                 if (TSConstants.ValuePrefixes.Any(p => p == w[0]))
                 {
                     // got a value reference
@@ -171,14 +175,19 @@ namespace TEABot.TEAScript
                         return new TSNamedValueArgument(w);
                     }
                 }
-                // must be a number otherwise
-                else if (SingleNumberArgument(w, out number))
+                else if (w.EndsWith(TSConstants.StringConstantPrefix))
                 {
-                    return new TSConstantValueArgument(number);
+                    // single-word string constant, drop prefix
+                    return new TSConstantStringArgument(w[1..]);
+                }
+                // must be a number otherwise
+                else if (SingleNumberArgument(w, out long number))
+                {
+                    return new TSConstantNumberArgument(number);
                 }
                 // error: fallback to 0 and mark parse failure
                 result = false;
-                return new TSConstantValueArgument(0L);
+                return new TSConstantNumberArgument(0L);
             }).ToArray();
             return result;
         }
