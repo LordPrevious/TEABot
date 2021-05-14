@@ -1,0 +1,14 @@
+superUser=<your own user name>
+self=<the bot's display name>
+host=irc.chat.twitch.tv
+port=6697
+login=<the bot's IRC nickname>
+auth=<the bot's IRC password / oauth token>
+ssl=ON
+twitchCaps=ON
+prefix=!
+maxMessageInterval=30
+maxMessageCount=20
+infoLog=OFF
+timestampFormat=HH:mm:ss
+storageDirectory=.data
