@@ -30,7 +30,7 @@ namespace TEABot.TEAScript.Instructions.Statements
                 a_context.Storage.ReleaseLock(a_context);
             }
             // delay further execution
-            return TSFlow.DelayNext(mIntervalSeconds.GetValue(a_context));
+            return TSFlow.DelayNext(mIntervalSeconds.GetValue(a_context.Values));
         }
     }
 }

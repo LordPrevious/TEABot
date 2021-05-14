@@ -25,7 +25,7 @@ namespace TEABot.TEAScript.Instructions.Statements.Storage
 
         public override ITSControlFlow Execute(TSExecutionContext a_context)
         {
-            a_context.Storage?.Remove(a_context, mKeyName.GetValue(a_context));
+            a_context.Storage?.Remove(a_context, mKeyName.GetValue(a_context.Values));
             return TSFlow.Next;
         }
     }

@@ -31,7 +31,7 @@ namespace TEABot.TEAScript.Instructions.Statements.Storage
 
         public override ITSControlFlow Execute(TSExecutionContext a_context)
         {
-            a_context.Storage?.Set(a_context, mKeyName.GetValue(a_context), mSourceValue, a_context.Values);
+            a_context.Storage?.Set(a_context, mKeyName.GetValue(a_context.Values), mSourceValue, a_context.Values);
             return TSFlow.Next;
         }
     }

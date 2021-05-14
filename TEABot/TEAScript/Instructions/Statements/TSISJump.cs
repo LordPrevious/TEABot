@@ -32,7 +32,7 @@ namespace TEABot.TEAScript.Instructions.Statements
 
         public override ITSControlFlow Execute(TSExecutionContext a_context)
         {
-            long currentValue = mSourceValue.GetValue(a_context);
+            long currentValue = mSourceValue.GetValue(a_context.Values);
             if (currentValue != 0)
             {
                 return TSFlow.JumpToLabel(mLabelName);

@@ -37,7 +37,7 @@ namespace TEABot.TEAScript.Instructions.Statements.Storage
         {
             if ((a_context.Storage != null)
                 && a_context.Storage.HoldsLock(a_context)
-                && a_context.Storage.Has(a_context, mKeyName.GetValue(a_context)))
+                && a_context.Storage.Has(a_context, mKeyName.GetValue(a_context.Values)))
             {
                 a_context.Values[mTargetName] = 1L;
             }

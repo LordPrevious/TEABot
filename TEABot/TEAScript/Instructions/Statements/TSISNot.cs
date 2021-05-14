@@ -48,7 +48,7 @@ namespace TEABot.TEAScript.Instructions.Statements
 
         public override ITSControlFlow Execute(TSExecutionContext a_context)
         {
-            a_context.Values[mTargetName] = mSourceValue.GetValue(a_context);
+            a_context.Values[mTargetName] = mSourceValue.GetValue(a_context.Values);
             return TSFlow.Next;
         }
     }

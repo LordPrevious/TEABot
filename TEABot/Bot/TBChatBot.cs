@@ -33,6 +33,11 @@ namespace TEABot.Bot
 
         #region Constructors
 
+        public TBChatBot()
+        {
+            mStorage.Broadcaster.Broadcast += BroadcastListener;
+        }
+
         #endregion
 
         #region Public methods
@@ -43,7 +48,6 @@ namespace TEABot.Bot
         /// <param name="a_rootDirectory">The bot configuration root directory</param>
         public void ReloadConfig(string a_rootDirectory)
         {
-
             // reset old config
             Global.Configuration = new TBConfiguration();
 
@@ -59,6 +63,18 @@ namespace TEABot.Bot
                     // load channel config
                     LoadConfig(la_directory, la_channel);
                 });
+
+            // set up config-dependent data
+            if (Path.IsPathRooted(Global.Configuration.StorageDirectory))
+            {
+                // assume absolute path
+                mStorage.StorageDirectory = Global.Configuration.StorageDirectory;
+            }
+            else
+            {
+                // assume path relative to config directory
+                mStorage.StorageDirectory = Path.Combine(a_rootDirectory, Global.Configuration.StorageDirectory);
+            }
         }
 
         /// <summary>
@@ -273,7 +289,12 @@ namespace TEABot.Bot
         /// <summary>
         /// Lock for message sending as multiple threads may request accessing the IRC connection
         /// </summary>
-        private object mMessageSendLock = new Object();
+        private readonly object mMessageSendLock = new();
+
+        /// <summary>
+        /// A storage provider for access to persistent data
+        /// </summary>
+        private readonly TBStorage mStorage = new();
 
         #endregion
 
@@ -281,7 +302,8 @@ namespace TEABot.Bot
 
         /// <summary>
         /// Perform a loading operation for each channel subdirectory of the given root directory,
-        /// creating the respective channel in Channels if needed
+        /// creating the respective channel in Channels if needed.
+        /// Channels starting with a period ('.') will be skipped.
         /// </summary>
         /// <param name="a_rootDirectory">The root directory for which to process subdirectories</param>
         /// <param name="a_loader">A loader function invoked for each subdirectory, being passed the corresponding channel and directory name</param>
@@ -289,22 +311,24 @@ namespace TEABot.Bot
         {
             try
             {
-                var subDirectories = Directory.GetDirectories(Properties.Settings.Default.DataDirectory);
+                var subDirectories = Directory.GetDirectories(a_rootDirectory);
                 foreach (var d in subDirectories)
                 {
                     // get channel data
                     var channelName = Path.GetFileName(d).ToLowerInvariant();
-                    TBChannel channel;
-                    if (!(Channels.TryGetValue(channelName, out channel)))
+                    if (!channelName.StartsWith('.'))
                     {
-                        channel = new TBChannel()
+                        if (!(Channels.TryGetValue(channelName, out TBChannel channel)))
                         {
-                            Name = channelName
-                        };
-                        Channels[channelName] = channel;
+                            channel = new TBChannel()
+                            {
+                                Name = channelName
+                            };
+                            Channels[channelName] = channel;
+                        }
+                        // invoke loader
+                        a_loader?.Invoke(channel, d);
                     }
-                    // invoke loader
-                    a_loader?.Invoke(channel, d);
                 }
             }
             catch (Exception e)
@@ -509,7 +533,7 @@ namespace TEABot.Bot
         /// <param name="a_arguments">Any script arguments</param>
         private void ExecuteScript(TBChannel a_channel, TSCompiledScript a_script, string a_sender, string a_arguments)
         {
-            var executor = new TBTaskedExecutor(mCTSource.Token, a_channel, a_script, a_arguments, a_sender);
+            var executor = new TBTaskedExecutor(mStorage, a_channel, a_script, a_arguments, a_sender, mCTSource.Token);
             if (executor.InitializeContext())
             {
                 executor.Broadcaster.Context = a_channel;
@@ -540,7 +564,7 @@ namespace TEABot.Bot
         {
             if (a_script.Interval > 0)
             {
-                var executor = new TBTaskedExecutor(mCTSource.Token, a_channel, a_script, String.Empty, String.Empty);
+                var executor = new TBTaskedExecutor(mStorage, a_channel, a_script, String.Empty, String.Empty, mCTSource.Token);
                 if (executor.InitializeContext())
                 {
                     executor.Broadcaster.Context = a_channel;

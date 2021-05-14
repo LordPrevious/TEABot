@@ -51,8 +51,8 @@ namespace TEABot.TEAScript.Instructions.Statements
         public override ITSControlFlow Execute(TSExecutionContext a_context)
         {
             // get current values
-            long firstLimit = mFirstLimit.GetValue(a_context);
-            long secondLimit = mSecondLimit.GetValue(a_context);
+            long firstLimit = mFirstLimit.GetValue(a_context.Values);
+            long secondLimit = mSecondLimit.GetValue(a_context.Values);
             // get upper and lower limit
             long lowerLimit;
             long upperLimit;

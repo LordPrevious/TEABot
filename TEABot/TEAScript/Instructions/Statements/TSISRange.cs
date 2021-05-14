@@ -47,8 +47,8 @@ namespace TEABot.TEAScript.Instructions.Statements
         {
             // get current values
             long currentValue = a_context.Values[mValueName];
-            long firstLimit = mFirstLimit.GetValue(a_context);
-            long secondLimit = mSecondLimit.GetValue(a_context);
+            long firstLimit = mFirstLimit.GetValue(a_context.Values);
+            long secondLimit = mSecondLimit.GetValue(a_context.Values);
             // get upper and lower limit
             long lowerLimit;
             long upperLimit;

@@ -15,9 +15,9 @@ namespace TEABot.TEAScript
         /// <summary>
         /// Get the actual value
         /// </summary>
-        /// <param name="a_context">The script execution contect</param>
+        /// <param name="a_values">Value dictionary for dependencies and dynamic values</param>
         /// <returns>The numerical value</returns>
-        TSValue GetValue(TSExecutionContext a_context);
+        TSValue GetValue(TSValueDictionary a_values);
     }
 
     /// <summary>
@@ -53,9 +53,9 @@ namespace TEABot.TEAScript
             }
         }
 
-        public TSValue GetValue(TSExecutionContext a_context)
+        public TSValue GetValue(TSValueDictionary a_values)
         {
-            return a_context.Values[ValueName];
+            return a_values[ValueName];
         }
     }
 
@@ -76,7 +76,7 @@ namespace TEABot.TEAScript
             ConstantValue = a_constantValue;
         }
 
-        public TSValue GetValue(TSExecutionContext a_context)
+        public TSValue GetValue(TSValueDictionary a_values)
         {
             return ConstantValue;
         }
@@ -99,7 +99,7 @@ namespace TEABot.TEAScript
             ConstantValue = a_constantValue;
         }
 
-        public TSValue GetValue(TSExecutionContext a_context)
+        public TSValue GetValue(TSValueDictionary a_values)
         {
             return ConstantValue;
         }

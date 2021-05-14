@@ -134,6 +134,13 @@ namespace TEABot.Bot
         [TBOptionName("logCutoffSize")]
         public long LogCutoffSize { get; private set; } = 3000L;
 
+        /// <summary>
+        /// Path to directory where persistent data files are to be stored.
+        /// If relative, will be assumed to be relative to config base directory.
+        /// </summary>
+        [TBOptionName("storageDirectory")]
+        public string StorageDirectory { get; private set; } = ".data";
+
         #endregion Public properties
 
         #region Constructors

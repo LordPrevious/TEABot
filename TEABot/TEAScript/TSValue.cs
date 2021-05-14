@@ -23,6 +23,11 @@ namespace TEABot.TEAScript
         public long NumericalValue { get; }
 
         /// <summary>
+        /// True iff the value was created from a text rather than a number.
+        /// </summary>
+        public bool IsText { get; }
+
+        /// <summary>
         /// Empty value to use as default in automatic generation of dictionary entries
         /// </summary>
         public static readonly TSValue Empty = new(String.Empty, 0L);
@@ -36,6 +41,7 @@ namespace TEABot.TEAScript
         {
             TextValue = a_textValue;
             NumericalValue = a_numericalValue;
+            IsText = true;
         }
 
         /// <summary>
@@ -53,6 +59,7 @@ namespace TEABot.TEAScript
             {
                 NumericalValue = 0L;
             }
+            IsText = true;
         }
 
         /// <summary>
@@ -63,6 +70,7 @@ namespace TEABot.TEAScript
         {
             NumericalValue = a_numericalValue;
             TextValue = a_numericalValue.ToString();
+            IsText = false;
         }
 
         /// <summary>
