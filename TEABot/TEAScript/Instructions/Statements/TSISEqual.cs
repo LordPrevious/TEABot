@@ -18,14 +18,13 @@ namespace TEABot.TEAScript.Instructions.Statements
         /// <summary>
         /// Arguments to check for equality
         /// </summary>
-        private ITSValueArgument[] mArguments = new ITSValueArgument[0];
+        private ITSValueArgument[] mArguments = Array.Empty<ITSValueArgument>();
 
         protected override bool Parse(string a_instructionArguments)
         {
             var validator = new TSValidator(ParsingBroadcaster);
 
-            ITSValueArgument[] valueArguments;
-            if (!SplitValueArguments(a_instructionArguments, out valueArguments)) return false;
+            if (!SplitValueArguments(a_instructionArguments, out ITSValueArgument[] valueArguments)) return false;
 
             // check for argument count
             if (!validator.ContainsEnoughArguments(valueArguments, 2, true))
@@ -62,7 +61,7 @@ namespace TEABot.TEAScript.Instructions.Statements
         private long CalculateResult(TSExecutionContext a_context)
         {
             // get numerical values via context
-            var numberArguments = mArguments.Select(a => a.GetValue(a_context)).ToArray();
+            var numberArguments = mArguments.Select(a => a.GetValue(a_context.Values).NumericalValue).ToArray();
             // operate on the actual values
             switch (mArguments.Length)
             {

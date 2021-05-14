@@ -1,0 +1,46 @@
+script Counter
+description Simple counter as persistent storage example
+command count
+
+##################################################
+
+# open storage via file name (no extension)
+storage:open global_counter
+
+# check if storage already contains a count value
+storage:has !hasCount "count
+
+jump @loadCount !hasCount
+# no stored value, initialize as 0
+store !count 0
+jump @pastLoad 1
+
+@loadCount
+# load count if present
+storage:get !count "count
+
+@pastLoad
+
+# increase counter
+add !count !count 1
+
+# add to storage
+storage:set "count !count
+# save modified storage
+storage:save
+# close storage
+storage:close
+
+# print current counter value
+write We have 
+print !count
+equal !singular !count 1
+jump @singular !singular
+write  monarchs
+jump @pastSingular 1
+@singular
+write  monarch
+@pastSingular
+write !
+flush
+end

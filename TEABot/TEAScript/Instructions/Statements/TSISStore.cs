@@ -18,7 +18,7 @@ namespace TEABot.TEAScript.Instructions.Statements
         /// <summary>
         /// The value to store
         /// </summary>
-        private ITSValueArgument mSourceValue = new TSConstantValueArgument(0L);
+        private ITSValueArgument mSourceValue = new TSConstantNumberArgument(0L);
 
         protected override bool Parse(string a_instructionArguments)
         {
@@ -35,7 +35,7 @@ namespace TEABot.TEAScript.Instructions.Statements
 
         public override ITSControlFlow Execute(TSExecutionContext a_context)
         {
-            a_context.Values[mTargetName] = mSourceValue.GetValue(a_context);
+            a_context.Values[mTargetName] = mSourceValue.GetValue(a_context.Values);
             return TSFlow.Next;
         }
     }

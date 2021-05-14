@@ -27,6 +27,21 @@ namespace TEABot.TEAScript
         public const char VariablePrefix = '!';
 
         /// <summary>
+        /// Prefix for single-word string constants
+        /// </summary>
+        public const char StringConstantPrefix = '"';
+
+        /// <summary>
+        /// Special character allowed in variable names for improved readability
+        /// </summary>
+        public const char VariableGroupIndicator = '.';
+
+        /// <summary>
+        /// Postfix for wildcard value access
+        /// </summary>
+        public const char WildcardPostfix = '*';
+
+        /// <summary>
         /// Prefix for jump label names
         /// </summary>
         public const char JumpLabelPrefix = '@';

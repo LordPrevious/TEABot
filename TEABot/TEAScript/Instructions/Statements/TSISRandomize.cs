@@ -26,12 +26,12 @@ namespace TEABot.TEAScript.Instructions.Statements
         /// <summary>
         /// One bound of the range from which to pick a number
         /// </summary>
-        private ITSValueArgument mFirstLimit = new TSConstantValueArgument(0L);
+        private ITSValueArgument mFirstLimit = new TSConstantNumberArgument(0L);
 
         /// <summary>
         /// The other bound of the range from which to pick a number
         /// </summary>
-        private ITSValueArgument mSecondLimit = new TSConstantValueArgument(0L);
+        private ITSValueArgument mSecondLimit = new TSConstantNumberArgument(0L);
 
         protected override bool Parse(string a_instructionArguments)
         {
@@ -51,8 +51,8 @@ namespace TEABot.TEAScript.Instructions.Statements
         public override ITSControlFlow Execute(TSExecutionContext a_context)
         {
             // get current values
-            long firstLimit = mFirstLimit.GetValue(a_context);
-            long secondLimit = mSecondLimit.GetValue(a_context);
+            long firstLimit = mFirstLimit.GetValue(a_context.Values);
+            long secondLimit = mSecondLimit.GetValue(a_context.Values);
             // get upper and lower limit
             long lowerLimit;
             long upperLimit;

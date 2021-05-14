@@ -21,7 +21,7 @@ namespace TEABot.TEAScript
         /// <summary>
         /// Broadcaster to send validation messages to
         /// </summary>
-        private TSBroadcaster mBroadcaster = null;
+        private readonly TSBroadcaster mBroadcaster = null;
 
         /// <summary>
         /// Initialize a new validator
@@ -54,7 +54,7 @@ namespace TEABot.TEAScript
                 mBroadcaster?.Error("A value name must not be empty.");
             }
 
-            if (a_word.All(Char.IsLetterOrDigit))
+            if (a_word.All(IsAllowedValueNameCharacter))
             {
                 return this;
             }
@@ -65,13 +65,25 @@ namespace TEABot.TEAScript
         }
 
         /// <summary>
+        /// Checks if a character is allowed as part of an unprefixed value name
+        /// </summary>
+        /// <param name="a_char">The character to check</param>
+        /// <returns>True iff the character is allowed</returns>
+        private static bool IsAllowedValueNameCharacter(Char a_char)
+        {
+            return (Char.IsLetterOrDigit(a_char)
+                || (a_char == TSConstants.VariableGroupIndicator));
+        }
+
+        /// <summary>
         /// Check if the given word is a valid value name,
         /// starting with a scope prefix (see TSConstants.ValuePrefixes)
         /// and containing only allowed characters
         /// </summary>
         /// <param name="a_word">The word to check</param>
+        /// <param name="a_allowWildcard">True to allow wildcard postfix</param>
         /// <returns>The validation result</returns>
-        public TSValidator IsValueName(string a_word)
+        public TSValidator IsValueName(string a_word, bool a_allowWildcard = false)
         {
             if (a_word.Length < 1)
             {
@@ -85,7 +97,11 @@ namespace TEABot.TEAScript
                 IsValid = false;
                 return this;
             }
-            return IsUnprefixedValueName(a_word.Substring(1));
+            if (a_allowWildcard && a_word.EndsWith(TSConstants.WildcardPostfix))
+            {
+                return IsUnprefixedValueName(a_word[1..^1]);
+            }
+            return IsUnprefixedValueName(a_word[1..]);
         }
 
         /// <summary>
@@ -94,8 +110,9 @@ namespace TEABot.TEAScript
         /// and containing only allowed characters
         /// </summary>
         /// <param name="a_word">The word to check</param>
+        /// <param name="a_allowWildcard">True to allow wildcard postfix</param>
         /// <returns>The validation result</returns>
-        public TSValidator IsVariableName(string a_word)
+        public TSValidator IsVariableName(string a_word, bool a_allowWildcard = false)
         {
             if (a_word.Length < 1)
             {
@@ -109,7 +126,11 @@ namespace TEABot.TEAScript
                 IsValid = false;
                 return this;
             }
-            return IsUnprefixedValueName(a_word.Substring(1));
+            if (a_allowWildcard && a_word.EndsWith(TSConstants.WildcardPostfix))
+            {
+                return IsUnprefixedValueName(a_word[1..^1]);
+            }
+            return IsUnprefixedValueName(a_word[1..]);
         }
 
         /// <summary>
@@ -134,7 +155,7 @@ namespace TEABot.TEAScript
                 return this;
             }
             // same naming rules as for value names
-            return IsUnprefixedValueName(a_word.Substring(1));
+            return IsUnprefixedValueName(a_word[1..]);
         }
 
         /// <summary>

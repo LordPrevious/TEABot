@@ -16,7 +16,7 @@ namespace TEABot.TEAScript
         /// <summary>
         /// A broadcaster that's used during script executing. Listen on it to receive execution messages including flushes
         /// </summary>
-        public readonly TSBroadcaster Broadcaster = new TSBroadcaster();
+        public readonly TSBroadcaster Broadcaster = new();
 
         #endregion
 
@@ -29,12 +29,7 @@ namespace TEABot.TEAScript
         /// <param name="a_arguments">The arguments to the script's parameters</param>
         protected TSExecutor(TSCompiledScript a_script, string a_arguments)
         {
-            if (a_script == null)
-            {
-                throw new ArgumentNullException("a_script");
-            }
-
-            mScript = a_script;
+            mScript = a_script ?? throw new ArgumentNullException(nameof(a_script));
             mArguments = a_arguments ?? String.Empty;
         }
 
@@ -48,8 +43,10 @@ namespace TEABot.TEAScript
         /// <returns>True iff the executor was initialized properly, false on error, e.g. invalid execution arguments</returns>
         public bool InitializeContext()
         {
-            mContext = new TSExecutionContext();
-            mContext.Broadcaster = Broadcaster;
+            mContext = new TSExecutionContext
+            {
+                Broadcaster = Broadcaster
+            };
 
             // initialize parameter values from mScript parameter specifications and mArguments
             var argumentParser = new TSScriptArgumentParser(mScript, mArguments);
@@ -127,12 +124,11 @@ namespace TEABot.TEAScript
                     // increase index for next statement
                     ++mNextStatementIndex;
                 }
-                else if (flow is TSFlowDelayNextStatement)
+                else if (flow is TSFlowDelayNextStatement delayFlow)
                 {
                     // increase index for next statement
                     ++mNextStatementIndex;
                     // delay execution
-                    var delayFlow = (TSFlowDelayNextStatement)flow;
                     if (delayFlow.DelayIntervalSeconds > 0)
                     {
                         Broadcaster.Info("Delaying further execution for {0} seconds",
@@ -141,11 +137,9 @@ namespace TEABot.TEAScript
                         return;
                     }
                 }
-                else if (flow is TSFlowJumpToLabel)
+                else if (flow is TSFlowJumpToLabel labelFlow)
                 {
-                    var labelFlow = (TSFlowJumpToLabel)flow;
-                    int labelJumpIndex;
-                    if (!mScript.Labels.TryGetValue(labelFlow.Label, out labelJumpIndex))
+                    if (!mScript.Labels.TryGetValue(labelFlow.Label, out int labelJumpIndex))
                     {
                         Broadcaster.Error("Encountered jump to unknown label {0} at index {1}, aborting execution",
                             labelFlow.Label,
