@@ -20,14 +20,13 @@ namespace TEABot.TEAScript.Instructions.Statements
         /// <summary>
         /// Arguments to use in the calculation.
         /// </summary>
-        private ITSValueArgument[] mArguments = new ITSValueArgument[0];
+        private ITSValueArgument[] mArguments = Array.Empty<ITSValueArgument>();
 
         protected override bool Parse(string a_instructionArguments)
         {
             var validator = new TSValidator(ParsingBroadcaster);
 
-            ITSValueArgument[] valueArguments;
-            if (!SplitValueArguments(a_instructionArguments, out valueArguments)) return false;
+            if (!SplitValueArguments(a_instructionArguments, out ITSValueArgument[] valueArguments)) return false;
 
             // check for argument count
             if (!validator.ContainsEnoughArguments(valueArguments, 2, true))

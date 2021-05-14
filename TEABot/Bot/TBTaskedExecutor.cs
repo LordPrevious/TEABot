@@ -45,7 +45,7 @@ namespace TEABot.Bot
         /// <summary>
         /// Prevent simultanous execution of tasks, e.g. when setting up a delayed execution
         /// </summary>
-        private readonly object mRunLock = new object();
+        private readonly object mRunLock = new();
 
         /// <summary>
         /// A storage provider for access to persistent data

@@ -12,12 +12,12 @@ namespace TEABot.TEAScript.Instructions.Statements
         /// <summary>
         /// A randomizer shared across all instances
         /// </summary>
-        private static readonly Random sRandomizer = new Random();
+        private static readonly Random sRandomizer = new();
 
         /// <summary>
         /// Names of the jump target labels
         /// </summary>
-        private string[] mLabelNames = new string[0];
+        private string[] mLabelNames = Array.Empty<string>();
 
         protected override bool Parse(string a_instructionArguments)
         {

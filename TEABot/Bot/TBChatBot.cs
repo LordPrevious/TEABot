@@ -274,7 +274,7 @@ namespace TEABot.Bot
         /// <summary>
         /// Used to cancel running tasks on exit
         /// </summary>
-        private CancellationTokenSource mCTSource = new CancellationTokenSource();
+        private CancellationTokenSource mCTSource = new();
 
         /// <summary>
         /// Maximal time for regex pattern matching when checking chat messages for script triggers
@@ -359,10 +359,10 @@ namespace TEABot.Bot
                         Environment.NewLine,
                         f));
 
-                    TBConfiguration.ErrorMessageHandler errorMessageHandler = (la_errorMessage) =>
+                    void errorMessageHandler(string la_errorMessage)
                     {
                         OnError?.Invoke(a_channel, la_errorMessage);
-                    };
+                    }
 
                     a_channel.Configuration.ErrorMessage += errorMessageHandler;
                     a_channel.Configuration.ParseFromFile(f);
@@ -477,22 +477,20 @@ namespace TEABot.Bot
             if (spaceIndex > 0)
             {
                 // command is after prefix until first space
-                command = a_message.Substring(a_channel.Configuration.Prefix.Length,
-                    spaceIndex - a_channel.Configuration.Prefix.Length);
+                command = a_message[a_channel.Configuration.Prefix.Length..spaceIndex];
                 // arguments are remaining input
-                arguments = a_message.Substring(spaceIndex + 1);
+                arguments = a_message[(spaceIndex + 1)..];
             }
             else
             {
                 // command is entire input except for command prefix
-                command = a_message.Substring(a_channel.Configuration.Prefix.Length);
+                command = a_message[a_channel.Configuration.Prefix.Length..];
                 // no arguments
                 arguments = String.Empty;
             }
 
             // check if any script is triggered by this command
-            TSCompiledScript script;
-            if (a_channel.TriggeredScripts.TryGetValue(command, out script)
+            if (a_channel.TriggeredScripts.TryGetValue(command, out TSCompiledScript script)
                 || ((a_channel != Global) && Global.TriggeredScripts.TryGetValue(command, out script)))
             {
                 ExecuteScript(a_channel, script, a_sender, arguments);
@@ -743,8 +741,7 @@ namespace TEABot.Bot
             var message = String.Format("Joined channel {0}", channel);
             OnNotice?.Invoke(Global, message);
 
-            TBChannel context;
-            if (Channels.TryGetValue(channel.Substring(1), out context))
+            if (Channels.TryGetValue(channel[1..], out TBChannel context))
             {
                 // mark channel as joined
                 context.Joined = true;
@@ -796,8 +793,7 @@ namespace TEABot.Bot
                     nick = nickname.IsNick ? nickname.NickName : nickname.ToString();
                 }
 
-                TBChannel context;
-                if (Channels.TryGetValue(channel.Substring(1), out context))
+                if (Channels.TryGetValue(channel[1..], out TBChannel context))
                 {
                     HandleReceivedMessage(context, message, nick);
                 }
@@ -818,8 +814,7 @@ namespace TEABot.Bot
                     nick = nickname.IsNick ? nickname.NickName : nickname.ToString();
                 }
 
-                TBChannel context;
-                if (Channels.TryGetValue(channel.Substring(1), out context))
+                if (Channels.TryGetValue(channel[1..], out TBChannel context))
                 {
                     OnNotice?.Invoke(context, String.Format("NOTICE: {0}: {1}", nick, message));
                 }
@@ -842,8 +837,7 @@ namespace TEABot.Bot
             var message = String.Format("Parted from channel {0}", channel);
             OnNotice?.Invoke(Global, message);
 
-            TBChannel context;
-            if (Channels.TryGetValue(channel.Substring(1), out context))
+            if (Channels.TryGetValue(channel[1..], out TBChannel context))
             {
                 OnNotice?.Invoke(context, message);
 

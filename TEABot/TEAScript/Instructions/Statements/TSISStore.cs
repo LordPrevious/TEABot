@@ -22,8 +22,7 @@ namespace TEABot.TEAScript.Instructions.Statements
 
         protected override bool Parse(string a_instructionArguments)
         {
-            ITSValueArgument[] valueArguments;
-            if ((!SplitValueArguments(a_instructionArguments, out valueArguments))
+            if ((!SplitValueArguments(a_instructionArguments, out ITSValueArgument[] valueArguments))
                 || (!(new TSValidator(ParsingBroadcaster).ContainsEnoughArguments(valueArguments, 2)))
                 || (!VariableNameValueArgument(valueArguments[0], out mTargetName)))
             {

@@ -181,10 +181,8 @@ namespace TEABot.Bot
         {
             try
             {
-                using (var sr = File.OpenText(a_filename))
-                {
-                    return ParseFromReader(sr);
-                }
+                using var sr = File.OpenText(a_filename);
+                return ParseFromReader(sr);
             }
             catch (Exception e)
             {
@@ -205,10 +203,8 @@ namespace TEABot.Bot
         {
             try
             {
-                using (var sr = new StringReader(a_configuration))
-                {
-                    return ParseFromReader(sr);
-                }
+                using var sr = new StringReader(a_configuration);
+                return ParseFromReader(sr);
             }
             catch (Exception e)
             {
@@ -257,11 +253,10 @@ namespace TEABot.Bot
                     continue;
                 }
                 name = line.Substring(0, separatorIndex);
-                value = line.Substring(separatorIndex + 1);
+                value = line[(separatorIndex + 1)..];
 
                 // find corresponding instruction class
-                PropertyInfo optionProperty;
-                if (sOptionProperties.TryGetValue(name.ToLowerInvariant(), out optionProperty))
+                if (sOptionProperties.TryGetValue(name.ToLowerInvariant(), out PropertyInfo optionProperty))
                 {
                     if (optionProperty.PropertyType == typeof(string))
                     {
@@ -269,8 +264,7 @@ namespace TEABot.Bot
                     }
                     else if (optionProperty.PropertyType == typeof(long))
                     {
-                        long parsedNMumberValue;
-                        if (ParseNumberValue(value, out parsedNMumberValue))
+                        if (ParseNumberValue(value, out long parsedNMumberValue))
                         {
                             optionProperty.SetValue(this, parsedNMumberValue);
                         }
@@ -285,8 +279,7 @@ namespace TEABot.Bot
                     }
                     else if (optionProperty.PropertyType == typeof(bool))
                     {
-                        bool parsedBoolValue;
-                        if (ParseBoolValue(value, out parsedBoolValue))
+                        if (ParseBoolValue(value, out bool parsedBoolValue))
                         {
                             optionProperty.SetValue(this, parsedBoolValue);
                         }
@@ -366,7 +359,7 @@ namespace TEABot.Bot
         /// Known boolean option value strings and their boolean value,
         /// all strings should be lowercase as input will be converted ToLowerInvariant() for lookups
         /// </summary>
-        private static Dictionary<string, bool> sBooleanValues = new Dictionary<string, bool>()
+        private static readonly Dictionary<string, bool> sBooleanValues = new()
         {
             { "on", true },
             { "off", false },
@@ -417,7 +410,7 @@ namespace TEABot.Bot
         /// <param name="value">The value to parse</param>
         /// <param name="a_parsedNumberValue">The parsed value</param>
         /// <returns>True iff the value was parsed successfully</returns>
-        private bool ParseNumberValue(string value, out long a_parsedNumberValue)
+        private static bool ParseNumberValue(string value, out long a_parsedNumberValue)
         {
             return Int64.TryParse(value.Trim(), out a_parsedNumberValue);
         }
@@ -428,7 +421,7 @@ namespace TEABot.Bot
         /// <param name="value">The value to parse</param>
         /// <param name="a_parsedBoolValue">The parsed value</param>
         /// <returns>True iff the value was parsed successfully</returns>
-        private bool ParseBoolValue(string value, out bool a_parsedBoolValue)
+        private static bool ParseBoolValue(string value, out bool a_parsedBoolValue)
         {
             return sBooleanValues.TryGetValue(value.Trim().ToLowerInvariant(), out a_parsedBoolValue);
         }

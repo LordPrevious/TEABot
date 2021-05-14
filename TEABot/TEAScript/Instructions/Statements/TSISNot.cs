@@ -25,8 +25,7 @@ namespace TEABot.TEAScript.Instructions.Statements
         {
             var validator = new TSValidator(ParsingBroadcaster);
 
-            ITSValueArgument[] valueArguments;
-            if (!SplitValueArguments(a_instructionArguments, out valueArguments)) return false;
+            if (!SplitValueArguments(a_instructionArguments, out ITSValueArgument[] valueArguments)) return false;
             if (!validator.ContainsEnoughArguments(valueArguments, 2))
             {
                 return false;

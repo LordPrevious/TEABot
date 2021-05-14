@@ -35,22 +35,22 @@ namespace TEABot.Bot
         /// <summary>
         /// The channel configuration
         /// </summary>
-        public TBConfiguration Configuration = new TBConfiguration();
+        public TBConfiguration Configuration = new();
 
         /// <summary>
         /// Map from trigger command to script
         /// </summary>
-        public Dictionary<string, TSCompiledScript> TriggeredScripts = new Dictionary<string, TSCompiledScript>();
+        public Dictionary<string, TSCompiledScript> TriggeredScripts = new();
 
         /// <summary>
         /// Map from trigger regex to script
         /// </summary>
-        public Dictionary<Regex, TSCompiledScript> RegexScripts = new Dictionary<Regex, TSCompiledScript>();
+        public Dictionary<Regex, TSCompiledScript> RegexScripts = new();
 
         /// <summary>
         /// Periodically executed scripts
         /// </summary>
-        public List<TSCompiledScript> PeriodicScripts = new List<TSCompiledScript>();
+        public List<TSCompiledScript> PeriodicScripts = new();
 
         /// <summary>
         /// Whether the channel has been joined and can be sent to or not
@@ -60,6 +60,6 @@ namespace TEABot.Bot
         /// <summary>
         /// Timestamps for the last couple of sent messages for flood control
         /// </summary>
-        public List<DateTime> SendTimestamps = new List<DateTime>();
+        public List<DateTime> SendTimestamps = new();
     }
 }
