@@ -141,6 +141,14 @@ namespace TEABot.Bot
         [TBOptionName("storageDirectory")]
         public string StorageDirectory { get; private set; } = ".data";
 
+        /// <summary>
+        /// The web socket server port
+        /// Ignored on per-channel configurations
+        /// Not inherited
+        /// </summary>
+        [TBOptionName("webSocketPort")]
+        public long WebSocketPort { get; private set; } = 8080L;
+
         #endregion Public properties
 
         #region Constructors
