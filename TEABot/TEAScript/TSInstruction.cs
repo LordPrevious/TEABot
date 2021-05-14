@@ -139,7 +139,7 @@ namespace TEABot.TEAScript
                     return true;
                 }
             }
-            else if (firstWord.EndsWith(TSConstants.StringConstantPrefix))
+            else if (firstWord.StartsWith(TSConstants.StringConstantPrefix))
             {
                 // single-word string constant, drop prefix
                 a_valueArgument = new TSConstantStringArgument(firstWord[1..]);
