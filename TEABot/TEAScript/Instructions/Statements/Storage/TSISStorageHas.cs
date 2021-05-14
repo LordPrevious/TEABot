@@ -23,14 +23,15 @@ namespace TEABot.TEAScript.Instructions.Statements.Storage
         {
             var validator = new TSValidator(ParsingBroadcaster);
 
-            if (!SplitValueArguments(a_instructionArguments, out ITSValueArgument[] valueArguments)
-                || !validator.ContainsEnoughArguments(valueArguments, 2)
-                || !VariableNameValueArgument(valueArguments[0], out mTargetName))
+            var words = SplitWordsArguments(a_instructionArguments);
+            if (validator.ContainsEnoughArguments(words, 2)
+                && validator.IsVariableName(words[0])
+                && SingleValueArgument(words[1], out mKeyName))
             {
-                return false;
+                mTargetName = words[0];
+                return true;
             }
-            mKeyName = valueArguments[1];
-            return validator;
+            return false;
         }
 
         public override ITSControlFlow Execute(TSExecutionContext a_context)
