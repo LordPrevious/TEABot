@@ -17,7 +17,7 @@ namespace TEABot.UI
         /// <summary>
         /// Chat bot core
         /// </summary>
-        private TBChatBot mChatBot = new TBChatBot();
+        private readonly TBChatBot mChatBot = new();
 
         /// <summary>
         /// The currently selected, active channel from mChannels/mGlobal
@@ -32,27 +32,27 @@ namespace TEABot.UI
         /// <summary>
         /// RTF template for outgoing messages
         /// </summary>
-        private RtfTemplate mRTFOutgoing = new RtfTemplate();
+        private RtfTemplate mRTFOutgoing = new();
         /// <summary>
         /// RTF template for incoming messages
         /// </summary>
-        private RtfTemplate mRTFIncoming = new RtfTemplate();
+        private RtfTemplate mRTFIncoming = new();
         /// <summary>
         /// RTF template for messages entered via the input box
         /// </summary>
-        private RtfTemplate mRTFLocal = new RtfTemplate();
+        private RtfTemplate mRTFLocal = new();
         /// <summary>
         /// RTF template for info messages
         /// </summary>
-        private RtfTemplate mRTFInfo = new RtfTemplate();
+        private RtfTemplate mRTFInfo = new();
         /// <summary>
         /// RTF template for warning messages
         /// </summary>
-        private RtfTemplate mRTFWarning = new RtfTemplate();
+        private RtfTemplate mRTFWarning = new();
         /// <summary>
         /// RTF template for error messages
         /// </summary>
-        private RtfTemplate mRTFError = new RtfTemplate();
+        private RtfTemplate mRTFError = new();
 
         /// <summary>
         /// Open the form for data directory configuration
@@ -141,7 +141,7 @@ namespace TEABot.UI
             {
                 if (!channelButtons.ContainsKey(channel))
                 {
-                    channelButtons[channel] = new ToolStripButton(channel, null, channelSelectioButton_Click)
+                    channelButtons[channel] = new ToolStripButton(channel, null, ChannelSelectioButton_Click)
                     {
                         DisplayStyle = ToolStripItemDisplayStyle.Text,
                         Checked = channel.Equals(activeChannelName)
@@ -211,20 +211,12 @@ namespace TEABot.UI
 
         private void MChatBot_OnChatMessage(TBChannel a_channel, TBMessageDirection a_direction, string a_sender, string a_message)
         {
-            RtfTemplate template;
-            switch (a_direction)
+            RtfTemplate template = a_direction switch
             {
-                case TBMessageDirection.SENT:
-                    template = mRTFOutgoing;
-                    break;
-                case TBMessageDirection.MANUAL:
-                    template = mRTFLocal;
-                    break;
-                case TBMessageDirection.RECEIVED:
-                default:
-                    template = mRTFIncoming;
-                    break;
-            }
+                TBMessageDirection.SENT => mRTFOutgoing,
+                TBMessageDirection.MANUAL => mRTFLocal,
+                _ => mRTFIncoming,
+            };
             LogMessage(template, a_message, a_channel, a_sender);
         }
 
@@ -283,19 +275,19 @@ namespace TEABot.UI
             }
         }
 
-        private void tsmiReload_Click(object sender, EventArgs e)
+        private void TsmiReload_Click(object sender, EventArgs e)
         {
             mChatBot.ReloadConfig(Properties.Settings.Default.DataDirectory);
             UpdateChannelList();
         }
 
-        private void tsmiRecompile_Click(object sender, EventArgs e)
+        private void TsmiRecompile_Click(object sender, EventArgs e)
         {
             mChatBot.ReloadScripts(Properties.Settings.Default.DataDirectory);
             UpdateChannelList();
         }
 
-        private void tsmiReloadRtf_Click(object sender, EventArgs e)
+        private void TsmiReloadRtf_Click(object sender, EventArgs e)
         {
             ReloadRTFTemplates();
         }
@@ -343,10 +335,9 @@ namespace TEABot.UI
             mChatBot.OnError -= MChatBot_OnError;
         }
 
-        private void channelSelectioButton_Click(object sender, EventArgs e)
+        private void ChannelSelectioButton_Click(object sender, EventArgs e)
         {
-            var tsbSender = sender as ToolStripButton;
-            if (tsbSender == null) return;
+            if (sender is not ToolStripButton tsbSender) return;
             if (tsbSender == mActiveChannelButton) return;
             mActiveChannelButton.Checked = false;
             if (mChatBot.Channels.TryGetValue(tsbSender.Text, out mActiveChannel))
@@ -361,12 +352,12 @@ namespace TEABot.UI
             mActiveChannelButton.Checked = true;
         }
 
-        private void tsmiIrcConnect_Click(object sender, EventArgs e)
+        private void TsmiIrcConnect_Click(object sender, EventArgs e)
         {
             mChatBot.Connect();
         }
 
-        private void tsmiIrcDisconnect_Click(object sender, EventArgs e)
+        private void TsmiIrcDisconnect_Click(object sender, EventArgs e)
         {
             mChatBot.Disconnect();
         }

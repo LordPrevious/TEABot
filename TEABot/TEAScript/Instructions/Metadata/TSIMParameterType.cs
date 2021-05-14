@@ -9,7 +9,7 @@ namespace TEABot.TEAScript.Instructions.Metadata
     [TSKeyword("type")]
     public class TSIMParameterType : TSIScriptMetadata
     {
-        private TSEParameterType mType = TSEParameterType.STRING;
+        private readonly TSEParameterType mType = TSEParameterType.STRING;
 
         public override void Apply(TSCompiledScript a_targetScript)
         {

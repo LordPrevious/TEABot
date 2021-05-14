@@ -20,7 +20,7 @@ namespace TEABot.TEAScript
         /// <summary>
         /// A broadcaster that's used during script parsing. Listen on it to receive parse messages including warnings and errors
         /// </summary>
-        public static readonly TSBroadcaster Broadcaster = new TSBroadcaster();
+        public static readonly TSBroadcaster Broadcaster = new();
 
         #endregion
 
@@ -35,10 +35,8 @@ namespace TEABot.TEAScript
         {
             try
             {
-                using (var sr = File.OpenText(a_filename))
-                {
-                    return ParseScriptFromReader(sr);
-                }
+                using var sr = File.OpenText(a_filename);
+                return ParseScriptFromReader(sr);
             }
             catch (Exception e)
             {
@@ -58,10 +56,8 @@ namespace TEABot.TEAScript
         {
             try
             {
-                using (var sr = new StringReader(a_scriptText))
-                {
-                    return ParseScriptFromReader(sr);
-                }
+                using var sr = new StringReader(a_scriptText);
+                return ParseScriptFromReader(sr);
             }
             catch (Exception e)
             {
@@ -144,23 +140,22 @@ namespace TEABot.TEAScript
                 else
                 {
                     keyword = line.Substring(0, spaceIndex);
-                    arguments = line.Substring(spaceIndex + 1);
+                    arguments = line[(spaceIndex + 1)..];
                 }
 
                 // find corresponding instruction class
-                Type instructionType;
-                if (sInstructionTypes.TryGetValue(keyword.ToLowerInvariant(), out instructionType))
+                if (sInstructionTypes.TryGetValue(keyword.ToLowerInvariant(), out Type instructionType))
                 {
                     var instruction = (TSInstruction)(Activator.CreateInstance(instructionType));
                     if (instruction.Parse(Broadcaster, arguments))
                     {
-                        if (instruction is TSIScriptMetadata)
+                        if (instruction is TSIScriptMetadata scriptMetadata)
                         {
-                            metadata.Add((TSIScriptMetadata)instruction);
+                            metadata.Add(scriptMetadata);
                         }
-                        else if (instruction is TSIStatement)
+                        else if (instruction is TSIStatement statement)
                         {
-                            statements.Add((TSIStatement)instruction);
+                            statements.Add(statement);
                         }
                         else
                         {
@@ -198,7 +193,7 @@ namespace TEABot.TEAScript
             }
 
             // ensure script ends with END statement
-            if ((statements.Count() > 0)
+            if ((statements.Count > 0)
                 && !(statements.Last() is TSISEnd))
             {
                 Broadcaster.Info(

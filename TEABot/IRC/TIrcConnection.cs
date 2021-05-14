@@ -28,8 +28,6 @@ namespace TEABot.IRC
             mReceiveBuffer = new byte[cBufferSize];
 
             mReceivedData = String.Empty;
-
-            mTcpClient = new TcpClient();
         }
 
         #endregion
@@ -39,7 +37,7 @@ namespace TEABot.IRC
         /// <summary>
         /// TCP client to connect to the IRC server
         /// </summary>
-        private TcpClient mTcpClient = null;
+        private readonly TcpClient mTcpClient = new();
         /// <summary>
         /// Input/output stream for server communications,
         /// points to either the TCP client's network stream directly, or to the SSL encryption stream
@@ -52,11 +50,11 @@ namespace TEABot.IRC
         /// <summary>
         /// Buffer for data to send to the server
         /// </summary>
-        private byte[] mSendBuffer;
+        private readonly byte[] mSendBuffer;
         /// <summary>
         /// Buffer for data received from the server
         /// </summary>
-        private byte[] mReceiveBuffer;
+        private readonly byte[] mReceiveBuffer;
         /// <summary>
         /// Decoded received data
         /// </summary>
@@ -468,8 +466,8 @@ namespace TEABot.IRC
 
             try
             {
-                var taskTcpConnect = mTcpClient.ConnectAsync(mHostname, mPort);
-                taskTcpConnect.ContinueWith(FinishConnect);
+                var taskTcpConnect = mTcpClient.ConnectAsync(mHostname, mPort, mCt);
+                taskTcpConnect.AsTask().ContinueWith(FinishConnect, mCt);
             }
             catch
             {

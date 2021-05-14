@@ -77,14 +77,14 @@
             this.tsmiIrcConnect.Name = "tsmiIrcConnect";
             this.tsmiIrcConnect.Size = new System.Drawing.Size(133, 22);
             this.tsmiIrcConnect.Text = "Connect";
-            this.tsmiIrcConnect.Click += new System.EventHandler(this.tsmiIrcConnect_Click);
+            this.tsmiIrcConnect.Click += new System.EventHandler(this.TsmiIrcConnect_Click);
             // 
             // tsmiIrcDisconnect
             // 
             this.tsmiIrcDisconnect.Name = "tsmiIrcDisconnect";
             this.tsmiIrcDisconnect.Size = new System.Drawing.Size(133, 22);
             this.tsmiIrcDisconnect.Text = "Disconnect";
-            this.tsmiIrcDisconnect.Click += new System.EventHandler(this.tsmiIrcDisconnect_Click);
+            this.tsmiIrcDisconnect.Click += new System.EventHandler(this.TsmiIrcDisconnect_Click);
             // 
             // tsmiConfig
             // 
@@ -109,21 +109,21 @@
             this.tsmiReload.Name = "tsmiReload";
             this.tsmiReload.Size = new System.Drawing.Size(186, 22);
             this.tsmiReload.Text = "Reload";
-            this.tsmiReload.Click += new System.EventHandler(this.tsmiReload_Click);
+            this.tsmiReload.Click += new System.EventHandler(this.TsmiReload_Click);
             // 
             // tsmiRecompile
             // 
             this.tsmiRecompile.Name = "tsmiRecompile";
             this.tsmiRecompile.Size = new System.Drawing.Size(186, 22);
             this.tsmiRecompile.Text = "Recompile";
-            this.tsmiRecompile.Click += new System.EventHandler(this.tsmiRecompile_Click);
+            this.tsmiRecompile.Click += new System.EventHandler(this.TsmiRecompile_Click);
             // 
             // tsmiReloadRtf
             // 
             this.tsmiReloadRtf.Name = "tsmiReloadRtf";
             this.tsmiReloadRtf.Size = new System.Drawing.Size(186, 22);
             this.tsmiReloadRtf.Text = "Reload RTF templates";
-            this.tsmiReloadRtf.Click += new System.EventHandler(this.tsmiReloadRtf_Click);
+            this.tsmiReloadRtf.Click += new System.EventHandler(this.TsmiReloadRtf_Click);
             // 
             // rtbLog
             // 
@@ -194,7 +194,7 @@
             this.tsbtnGlobal.Name = "tsbtnGlobal";
             this.tsbtnGlobal.Size = new System.Drawing.Size(197, 25);
             this.tsbtnGlobal.Text = "Global";
-            this.tsbtnGlobal.Click += new System.EventHandler(this.channelSelectioButton_Click);
+            this.tsbtnGlobal.Click += new System.EventHandler(this.ChannelSelectioButton_Click);
             // 
             // MainForm
             // 

@@ -12,14 +12,13 @@ namespace TEABot.TEAScript
     /// </summary>
     public class TSValueDictionary : IDictionary<string, TSValue>
     {
-        private readonly Dictionary<string, TSValue> mBackingDictionary = new Dictionary<string, TSValue>();
+        private readonly Dictionary<string, TSValue> mBackingDictionary = new();
 
         public TSValue this[string key]
         {
             get
             {
-                TSValue result;
-                if (!mBackingDictionary.TryGetValue(key, out result))
+                if (!mBackingDictionary.TryGetValue(key, out TSValue result))
                 {
                     result = TSValue.Empty;
                     mBackingDictionary[key] = result;

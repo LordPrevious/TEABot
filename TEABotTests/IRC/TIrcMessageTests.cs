@@ -44,7 +44,7 @@ namespace TEABotTests.IRC
         /// Assert parsed tags for MessageTags_Parse_SingleTagWithEmpty() as we expect the same result multiple times
         /// </summary>
         /// <param name="a_parsedTags">Parsed message tags</param>
-        private void MessageTags_Parse_SingleTagWithEmpty_AssertTagValues(TIrcMessage.MessageTags a_parsedTags)
+        private static void MessageTags_Parse_SingleTagWithEmpty_AssertTagValues(TIrcMessage.MessageTags a_parsedTags)
         {
             Assert.AreEqual(1, a_parsedTags.Tags.Count);
             var tagValueMulti = a_parsedTags.Tags["tagName"];
@@ -114,7 +114,7 @@ namespace TEABotTests.IRC
         /// Assert parsed tags for MessageTags_Parse_SingleTagWithEmpty() as we expect the same result multiple times
         /// </summary>
         /// <param name="a_parsedTags">Parsed message tags</param>
-        private void MessageTags_Parse_MultipleTagsWithEmpty_AssertTagValues(TIrcMessage.MessageTags a_parsedTags)
+        private static void MessageTags_Parse_MultipleTagsWithEmpty_AssertTagValues(TIrcMessage.MessageTags a_parsedTags)
         {
             Assert.AreEqual(3, a_parsedTags.Tags.Count);
             var tagValueTrailing_tagName = a_parsedTags.Tags["tagName"];

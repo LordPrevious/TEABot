@@ -18,12 +18,7 @@ namespace TEABot.TEAScript
         /// <param name="a_arguments">The script invocation arguments</param>
         public TSScriptArgumentParser(TSCompiledScript a_script, string a_arguments)
         {
-            if (a_script == null)
-            {
-                throw new ArgumentNullException("a_script");
-            }
-
-            mScript = a_script;
+            mScript = a_script ?? throw new ArgumentNullException(nameof(a_script));
             mArguments = a_arguments ?? String.Empty;
         }
 
@@ -79,8 +74,7 @@ namespace TEABot.TEAScript
                     case TSEParameterType.NUMBER:
                         // convert to number
                         {
-                            long numberValue;
-                            if (!Int64.TryParse(argument, out numberValue))
+                            if (!Int64.TryParse(argument, out long numberValue))
                             {
                                 a_context.Broadcaster.Error("Parameter {0} of NUMBER type has invalid argument \"{1}\"",
                                     parameter.Name,
@@ -165,7 +159,7 @@ namespace TEABot.TEAScript
                 return String.Empty;
             }
             // get substring
-            var result = mArguments.Substring(mPosition, nextPosition - mPosition);
+            var result = mArguments[mPosition..nextPosition];
             // update position
             mPosition = nextPosition;
             // return substrung
@@ -179,7 +173,7 @@ namespace TEABot.TEAScript
         /// <returns>The argument tail</returns>
         private string GetArgumentTail()
         {
-            var result = mArguments.Substring(mPosition);
+            var result = mArguments[mPosition..];
             mPosition = mArguments.Length;
             return result.Trim();
         }

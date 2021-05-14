@@ -127,7 +127,6 @@ namespace TEABot.IRC
         {
             MessageTags tags = null;
             MessagePrefix prefix = null;
-            MessageCommand command = null;
             MessageParams pars = null;
 
             var digestedMessage = a_rawMessage;
@@ -164,7 +163,7 @@ namespace TEABot.IRC
             if (commandSplit.Length < 1)
                 return null;
 
-            command = MessageCommand.Parse(commandSplit[0]);
+            MessageCommand command = MessageCommand.Parse(commandSplit[0]);
 
             var rawparams = String.Empty;
             if (commandSplit.Length >= 2)
@@ -425,7 +424,7 @@ namespace TEABot.IRC
             /// Dictionary mapping tag names to tag values
             /// </summary>
             public IReadOnlyDictionary<string, string> Tags { get { return mTags; } }
-            private Dictionary<string, string> mTags = new Dictionary<string, string>();
+            private readonly Dictionary<string, string> mTags = new();
         }
 
         /// <summary>
@@ -597,8 +596,7 @@ namespace TEABot.IRC
             {
                 var trimmedCommand = a_rawCommand.Trim();
 
-                int code;
-                if ((trimmedCommand.Length == 3) && int.TryParse(trimmedCommand, out code))
+                if ((trimmedCommand.Length == 3) && int.TryParse(trimmedCommand, out int code))
                 {
                     return new MessageCommand((TIrcResponseCode)code);
                 }

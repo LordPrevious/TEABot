@@ -93,7 +93,7 @@ namespace TEABot.UI
         /// <summary>
         /// Template parts and their processing delegates
         /// </summary>
-        private Tuple<string, GetProcessedTemplatePart>[] mParts;
+        private readonly Tuple<string, GetProcessedTemplatePart>[] mParts;
 
         #endregion Private data
 

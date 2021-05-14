@@ -60,16 +60,8 @@ namespace TEABot.TEAScript
         /// <param name="a_labels">The jump labels</param>
         public TSCompiledScript(TSIStatement[] a_statements, Dictionary<string, int> a_labels)
         {
-            if (a_statements == null)
-            {
-                throw new ArgumentNullException("a_statements");
-            }
-            if (a_labels == null)
-            {
-                throw new ArgumentNullException("a_labels");
-            }
-            Statements = a_statements;
-            Labels = a_labels;
+            Statements = a_statements ?? throw new ArgumentNullException(nameof(a_statements));
+            Labels = a_labels ?? throw new ArgumentNullException(nameof(a_labels));
         }
     }
 }
