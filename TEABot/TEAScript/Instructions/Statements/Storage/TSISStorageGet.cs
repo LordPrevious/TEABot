@@ -23,11 +23,11 @@ namespace TEABot.TEAScript.Instructions.Statements.Storage
         {
             var validator = new TSValidator(ParsingBroadcaster);
 
-
             var words = SplitWordsArguments(a_instructionArguments);
             if (validator.ContainsEnoughArguments(words, 2)
                 && SingleValueArgument(words[0], out ITSValueArgument tmpTargetValue, true)
                 && (tmpTargetValue is TSNamedValueArgument namedTargetValue)
+                && VariableNameValueArgument(namedTargetValue, out string _)
                 && SingleValueArgument(words[1], out mKeyName))
             {
                 mTargetValue = namedTargetValue;
