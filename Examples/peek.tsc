@@ -1,0 +1,29 @@
+script Overlay Peeker
+description Websocket overlay example w/ little peeking friend
+command peek
+
+##################################################
+# How-To:
+# Open the Peekaboo overlay file as a browser source in OBS - or in the browser of your choice:
+# .overlay_peekaboo/peekaboo.html
+# After starting TEABot, the file must be reloaded to establish a websocket connection.
+# Automatic connection retries could be programmed into the overlay via peekaboo.js but I
+# didn't bother with that for this example.
+#
+# TEABot is able to send simple JSON messages (flat hierarchy, string and integer values only)
+# to all connected websocket clients. This can be used to create custom interactive overlays.
+##################################################
+
+# send single value
+store !intent "PEEK
+hurl !intent
+# resulting JSON: {"intent":"PEEK"}
+end
+
+## example: send multiple values
+# store !data.intent "PEEK
+# store !data.speed 5
+# store !data.repetitions 3
+# hurl !data.*
+## resulting JSON: {"intent":"PEEK","speed":5,"repetitions":3}
+# end
