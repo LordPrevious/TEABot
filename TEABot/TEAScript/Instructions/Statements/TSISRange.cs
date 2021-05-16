@@ -70,6 +70,11 @@ namespace TEABot.TEAScript.Instructions.Statements
             {
                 a_context.Values[mValueName] = upperLimit;
             }
+            else
+            {
+                // ensure value is stored as a number, rather than a string
+                a_context.Values[mValueName] = currentValue;
+            }
             // proceed
             return TSFlow.Next;
         }
