@@ -16,8 +16,15 @@ namespace TEABot.TEAScript
         /// Get the actual value
         /// </summary>
         /// <param name="a_values">Value dictionary for dependencies and dynamic values</param>
-        /// <returns>The numerical value</returns>
+        /// <returns>The actual value</returns>
         TSValue GetValue(TSValueDictionary a_values);
+
+        /// <summary>
+        /// Check if the actual value exists
+        /// </summary>
+        /// <param name="a_values">Value dictionary for dependencies and dynamic values</param>
+        /// <returns>True iff the value exists</returns>
+        bool HasValue(TSValueDictionary a_values);
     }
 
     /// <summary>
@@ -55,7 +62,16 @@ namespace TEABot.TEAScript
 
         public TSValue GetValue(TSValueDictionary a_values)
         {
-            return a_values[ValueName];
+            if (a_values.TryGetValue(ValueName, out TSValue value))
+            {
+                return value;
+            }
+            return TSValue.Empty;
+        }
+
+        public bool HasValue(TSValueDictionary a_values)
+        {
+            return a_values.ContainsKey(ValueName);
         }
     }
 
@@ -80,6 +96,11 @@ namespace TEABot.TEAScript
         {
             return ConstantValue;
         }
+
+        public bool HasValue(TSValueDictionary a_values)
+        {
+            return true;
+        }
     }
 
     /// <summary>
@@ -102,6 +123,11 @@ namespace TEABot.TEAScript
         public TSValue GetValue(TSValueDictionary a_values)
         {
             return ConstantValue;
+        }
+
+        public bool HasValue(TSValueDictionary a_values)
+        {
+            return true;
         }
     }
 }
