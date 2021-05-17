@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using TEABot.TEAScript.Attributes;
 
 namespace TEABot.TEAScript.Instructions.Statements

@@ -7,13 +7,8 @@ namespace TEABot.TEAScript.Instructions.Statements.Storage
     /// Close the storage object, releasing the mutex
     /// </summary>
     [TSKeyword("storage:close")]
-    public class TSISStorageClose : TSIStatement
+    public class TSISStorageClose : TSISNoArguments
     {
-        protected override bool Parse(string a_instructionArguments)
-        {
-            return true;
-        }
-
         public override ITSControlFlow Execute(TSExecutionContext a_context)
         {
             a_context.Storage?.Close(a_context);
