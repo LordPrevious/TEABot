@@ -92,6 +92,7 @@ namespace TEABot.Bot
             //  context from channel, settings, and triggering message
             a_context.Values["$self"] = mChannel.Configuration.Self;
             a_context.Values["$channel"] = mChannel.Name;
+            a_context.Values["$isSuperUser"] = mChannel.Configuration.SuperUsers.Any(su => su.Equals(mSender, StringComparison.InvariantCultureIgnoreCase));
             a_context.Values["$sender"] = mSender;
 
             // additional context items

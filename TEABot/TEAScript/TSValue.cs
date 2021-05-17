@@ -74,6 +74,17 @@ namespace TEABot.TEAScript
         }
 
         /// <summary>
+        /// Create a new numerical value from a boolean.
+        /// </summary>
+        /// <param name="a_booleanValue">The boolean value</param>
+        public TSValue(bool a_booleanValue)
+        {
+            NumericalValue = a_booleanValue ? 1L : 0L;
+            TextValue = NumericalValue.ToString();
+            IsText = false;
+        }
+
+        /// <summary>
         /// Convert to long.
         /// </summary>
         /// <param name="a_value">The value to convert</param>
@@ -96,6 +107,15 @@ namespace TEABot.TEAScript
         /// </summary>
         /// <param name="a_value">The value to convert</param>
         public static implicit operator TSValue(long a_value)
+        {
+            return new TSValue(a_value);
+        }
+
+        /// <summary>
+        /// Convert from bool.
+        /// </summary>
+        /// <param name="a_value">The value to convert</param>
+        public static implicit operator TSValue(bool a_value)
         {
             return new TSValue(a_value);
         }
