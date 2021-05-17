@@ -53,13 +53,20 @@ namespace TEABot.Bot
         private readonly ITSStorage mStorage;
 
         /// <summary>
+        /// Hurler provider
+        /// </summary>
+        private readonly ITSHurler mHurler;
+
+        /// <summary>
         /// Initialize a tasked executor
         /// </summary>
+        /// <param name="a_storage">Storage provider</param>
+        /// <param name="a_hurler">Hurler provider</param>
         /// <param name="a_script">The script to execute</param>
         /// <param name="a_arguments">The arguments to the script's parameters</param>
         /// <param name="a_sender">The sender of the message that triggered script execution</param>
         /// <param name="a_ct">Used to cancel scheduled tasks</param>
-        public TBTaskedExecutor(ITSStorage a_storage, TBChannel a_channel, TSCompiledScript a_script, string a_arguments, string a_sender,
+        public TBTaskedExecutor(ITSStorage a_storage, ITSHurler a_hurler, TBChannel a_channel, TSCompiledScript a_script, string a_arguments, string a_sender,
             CancellationToken a_ct)
             : base(a_script, a_arguments)
         {
@@ -67,6 +74,7 @@ namespace TEABot.Bot
             mChannel = a_channel ?? throw new ArgumentNullException(nameof(a_channel));
             mSender = a_sender;
             mStorage = a_storage;
+            mHurler = a_hurler;
         }
 
         public override void Execute()
@@ -84,10 +92,12 @@ namespace TEABot.Bot
             //  context from channel, settings, and triggering message
             a_context.Values["$self"] = mChannel.Configuration.Self;
             a_context.Values["$channel"] = mChannel.Name;
+            a_context.Values["$isSuperUser"] = mChannel.Configuration.SuperUsers.Any(su => su.Equals(mSender, StringComparison.InvariantCultureIgnoreCase));
             a_context.Values["$sender"] = mSender;
 
             // additional context items
             a_context.Storage = mStorage;
+            a_context.Hurler = mHurler;
         }
 
         private void RunLocked()

@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TEABot.IRC;
 using TEABot.TEAScript;
+using TEABot.WebSocket;
 
 namespace TEABot.Bot
 {
@@ -177,6 +178,14 @@ namespace TEABot.Bot
             // connect to server
             mConnection.Connect(Global.Configuration.Host, (ushort)Global.Configuration.Port,
                 Global.Configuration.SSL, mCTSource.Token);
+
+            // set up web socket server
+            mWebSockets = new TWSServer((ushort)Global.Configuration.WebSocketPort);
+            mWebSockets.OnMessageReceived += WebSockets_OnMessageReceived;
+            mWebSockets.OnError += WebSockets_OnError;
+            mWebSockets.OnClientConnection += WebSockets_OnClientConnection;
+            mWebSockets.Start();
+            mHurler = new TBWebSocketHurler(mWebSockets);
         }
 
         /// <summary>
@@ -195,6 +204,14 @@ namespace TEABot.Bot
             }
 
             OnNotice?.Invoke(Global, "Disconnecting...");
+
+            // tear down web socket server
+            mHurler = null;
+            mWebSockets.Stop();
+            mWebSockets.OnMessageReceived -= WebSockets_OnMessageReceived;
+            mWebSockets.OnError -= WebSockets_OnError;
+            mWebSockets.OnClientConnection -= WebSockets_OnClientConnection;
+            mWebSockets = null;
 
             // disconnect from server
             mConnection.Disconnect();
@@ -292,9 +309,19 @@ namespace TEABot.Bot
         private readonly object mMessageSendLock = new();
 
         /// <summary>
+        /// Web socket server
+        /// </summary>
+        private TWSServer mWebSockets = null;
+
+        /// <summary>
         /// A storage provider for access to persistent data
         /// </summary>
         private readonly TBStorage mStorage = new();
+
+        /// <summary>
+        /// Hurler provider
+        /// </summary>
+        private TBWebSocketHurler mHurler = null;
 
         #endregion
 
@@ -490,6 +517,7 @@ namespace TEABot.Bot
             }
 
             // check if any script is triggered by this command
+            command = command.ToLowerInvariant();
             if (a_channel.TriggeredScripts.TryGetValue(command, out TSCompiledScript script)
                 || ((a_channel != Global) && Global.TriggeredScripts.TryGetValue(command, out script)))
             {
@@ -531,7 +559,7 @@ namespace TEABot.Bot
         /// <param name="a_arguments">Any script arguments</param>
         private void ExecuteScript(TBChannel a_channel, TSCompiledScript a_script, string a_sender, string a_arguments)
         {
-            var executor = new TBTaskedExecutor(mStorage, a_channel, a_script, a_arguments, a_sender, mCTSource.Token);
+            var executor = new TBTaskedExecutor(mStorage, mHurler, a_channel, a_script, a_arguments, a_sender, mCTSource.Token);
             if (executor.InitializeContext())
             {
                 executor.Broadcaster.Context = a_channel;
@@ -562,7 +590,7 @@ namespace TEABot.Bot
         {
             if (a_script.Interval > 0)
             {
-                var executor = new TBTaskedExecutor(mStorage, a_channel, a_script, String.Empty, String.Empty, mCTSource.Token);
+                var executor = new TBTaskedExecutor(mStorage, mHurler, a_channel, a_script, String.Empty, String.Empty, mCTSource.Token);
                 if (executor.InitializeContext())
                 {
                     executor.Broadcaster.Context = a_channel;
@@ -877,6 +905,23 @@ namespace TEABot.Bot
         void Connection_OnRaw(object sender, TIrcConnection.IrcDirection direction, string rawmessage)
         {
             OnInfo?.Invoke(Global, String.Format("RAW[{0}]: {1}", direction, rawmessage));
+        }
+
+        private void WebSockets_OnMessageReceived(TWSServer a_sender, string a_message)
+        {
+            OnInfo?.Invoke(Global, String.Format("WSS received: {0}", a_message));
+        }
+
+        private void WebSockets_OnError(TWSServer a_sender, string a_message)
+        {
+            OnError?.Invoke(Global, String.Format("WSS error: {0}", a_message));
+        }
+
+        private void WebSockets_OnClientConnection(TWSServer a_sender, bool a_connected, int a_connectionCount)
+        {
+            OnInfo?.Invoke(Global, String.Format("WSS: Client connection {0} ({1} total)",
+                a_connected ? "established" : "dropped",
+                a_connectionCount));
         }
 
         #endregion

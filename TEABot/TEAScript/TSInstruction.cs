@@ -175,7 +175,7 @@ namespace TEABot.TEAScript
                         return new TSNamedValueArgument(w);
                     }
                 }
-                else if (w.EndsWith(TSConstants.StringConstantPrefix))
+                else if (w.StartsWith(TSConstants.StringConstantPrefix))
                 {
                     // single-word string constant, drop prefix
                     return new TSConstantStringArgument(w[1..]);

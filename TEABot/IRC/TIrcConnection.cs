@@ -286,7 +286,7 @@ namespace TEABot.IRC
                         mSslStream = new SslStream(mTcpClient.GetStream(), false,
                             new RemoteCertificateValidationCallback(ValidateServerCerts_AcceptAll), null);
                         var taskAuthenticate = mSslStream.AuthenticateAsClientAsync(mHostname);
-                        taskAuthenticate.ContinueWith(FinishSslAuthentication);
+                        taskAuthenticate.ContinueWith(FinishSslAuthentication, mCt);
                     }
                     catch
                     {
@@ -433,7 +433,7 @@ namespace TEABot.IRC
             try
             {
                 var taskRead = mStream.ReadAsync(mReceiveBuffer, 0, mReceiveBuffer.Length, mCt);
-                taskRead.ContinueWith(FinishReceive);
+                taskRead.ContinueWith(FinishReceive, mCt);
             }
             catch (SocketException ex)
             {
@@ -556,7 +556,7 @@ namespace TEABot.IRC
             var lenght = Encoding.UTF8.GetBytes(a_rawMessage, 0, a_rawMessage.Length, mSendBuffer, 0);
 
             var taskWrite = mStream.WriteAsync(mSendBuffer, 0, lenght, mCt);
-            taskWrite.ContinueWith(FinishSendRaw, a_rawMessage);
+            taskWrite.ContinueWith(FinishSendRaw, a_rawMessage, mCt);
         }
 
         /// <summary>
