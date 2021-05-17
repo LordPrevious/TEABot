@@ -17,6 +17,7 @@ namespace TEABot.TEAScript.Instructions.Metadata
             if (a_targetScript.Parameters.Count > 0)
             {
                 a_targetScript.Parameters.Last().DefaultValue = mValue;
+                a_targetScript.Parameters.Last().HasDefaultValue = true;
             }
             else
             {
