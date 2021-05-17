@@ -30,66 +30,134 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.msMain = new System.Windows.Forms.MenuStrip();
-            this.tsmiIrc = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiTeaBot = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiTBAbout = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiTBGitHub = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.tsmiTBExit = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiConnection = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiIrcConnect = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiIrcDisconnect = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmiIrcReconnect = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.tsmiRestartWebSocket = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiConfig = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiDataDirectory = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.tsmiReload = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiRecompile = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmiReloadRtf = new System.Windows.Forms.ToolStripMenuItem();
             this.rtbLog = new System.Windows.Forms.RichTextBox();
-            this.tbInput = new System.Windows.Forms.TextBox();
-            this.scChannelsLog = new System.Windows.Forms.SplitContainer();
-            this.tsChannelSelection = new System.Windows.Forms.ToolStrip();
-            this.tsbtnGlobal = new System.Windows.Forms.ToolStripButton();
+            this.ssStatus = new System.Windows.Forms.StatusStrip();
+            this.tsslIrcStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tsslSeparator1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tsslWebSocketStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tsslSeparator2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.msMain.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.scChannelsLog)).BeginInit();
-            this.scChannelsLog.Panel1.SuspendLayout();
-            this.scChannelsLog.Panel2.SuspendLayout();
-            this.scChannelsLog.SuspendLayout();
-            this.tsChannelSelection.SuspendLayout();
+            this.ssStatus.SuspendLayout();
             this.SuspendLayout();
             // 
             // msMain
             // 
             this.msMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmiIrc,
+            this.tsmiTeaBot,
+            this.tsmiConnection,
             this.tsmiConfig});
             this.msMain.Location = new System.Drawing.Point(0, 0);
             this.msMain.Name = "msMain";
             this.msMain.Padding = new System.Windows.Forms.Padding(8, 3, 0, 3);
             this.msMain.Size = new System.Drawing.Size(684, 25);
             this.msMain.TabIndex = 0;
-            this.msMain.Text = "menuStrip1";
             // 
-            // tsmiIrc
+            // tsmiTeaBot
             // 
-            this.tsmiIrc.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiTeaBot.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmiTBAbout,
+            this.tsmiTBGitHub,
+            this.tsSeparator1,
+            this.tsmiTBExit});
+            this.tsmiTeaBot.Name = "tsmiTeaBot";
+            this.tsmiTeaBot.Size = new System.Drawing.Size(57, 19);
+            this.tsmiTeaBot.Text = "TEABot";
+            // 
+            // tsmiTBAbout
+            // 
+            this.tsmiTBAbout.Name = "tsmiTBAbout";
+            this.tsmiTBAbout.Size = new System.Drawing.Size(112, 22);
+            this.tsmiTBAbout.Text = "About";
+            this.tsmiTBAbout.Click += new System.EventHandler(this.TsmiTBAbout_Click);
+            // 
+            // tsmiTBGitHub
+            // 
+            this.tsmiTBGitHub.Name = "tsmiTBGitHub";
+            this.tsmiTBGitHub.Size = new System.Drawing.Size(112, 22);
+            this.tsmiTBGitHub.Text = "GitHub";
+            this.tsmiTBGitHub.Click += new System.EventHandler(this.TsmiTBGitHub_Click);
+            // 
+            // tsSeparator1
+            // 
+            this.tsSeparator1.Name = "tsSeparator1";
+            this.tsSeparator1.Size = new System.Drawing.Size(109, 6);
+            // 
+            // tsmiTBExit
+            // 
+            this.tsmiTBExit.Name = "tsmiTBExit";
+            this.tsmiTBExit.Size = new System.Drawing.Size(112, 22);
+            this.tsmiTBExit.Text = "Exit";
+            this.tsmiTBExit.Click += new System.EventHandler(this.TsmiTBExit_Click);
+            // 
+            // tsmiConnection
+            // 
+            this.tsmiConnection.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiIrcConnect,
-            this.tsmiIrcDisconnect});
-            this.tsmiIrc.Name = "tsmiIrc";
-            this.tsmiIrc.Size = new System.Drawing.Size(37, 19);
-            this.tsmiIrc.Text = "IRC";
+            this.tsmiIrcDisconnect,
+            this.tsmiIrcReconnect,
+            this.toolStripSeparator2,
+            this.tsmiRestartWebSocket});
+            this.tsmiConnection.Name = "tsmiConnection";
+            this.tsmiConnection.Size = new System.Drawing.Size(81, 19);
+            this.tsmiConnection.Text = "Connection";
             // 
             // tsmiIrcConnect
             // 
             this.tsmiIrcConnect.Name = "tsmiIrcConnect";
-            this.tsmiIrcConnect.Size = new System.Drawing.Size(133, 22);
-            this.tsmiIrcConnect.Text = "Connect";
+            this.tsmiIrcConnect.Size = new System.Drawing.Size(207, 22);
+            this.tsmiIrcConnect.Text = "Connect IRC";
             this.tsmiIrcConnect.Click += new System.EventHandler(this.TsmiIrcConnect_Click);
             // 
             // tsmiIrcDisconnect
             // 
             this.tsmiIrcDisconnect.Name = "tsmiIrcDisconnect";
-            this.tsmiIrcDisconnect.Size = new System.Drawing.Size(133, 22);
-            this.tsmiIrcDisconnect.Text = "Disconnect";
+            this.tsmiIrcDisconnect.Size = new System.Drawing.Size(207, 22);
+            this.tsmiIrcDisconnect.Text = "Disconnect IRC";
             this.tsmiIrcDisconnect.Click += new System.EventHandler(this.TsmiIrcDisconnect_Click);
+            // 
+            // tsmiIrcReconnect
+            // 
+            this.tsmiIrcReconnect.Enabled = false;
+            this.tsmiIrcReconnect.Name = "tsmiIrcReconnect";
+            this.tsmiIrcReconnect.Size = new System.Drawing.Size(207, 22);
+            this.tsmiIrcReconnect.Text = "Reconnect IRC";
+            this.tsmiIrcReconnect.Click += new System.EventHandler(this.tsmiIrcReconnect_Click);
+            // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(204, 6);
+            // 
+            // tsmiRestartWebSocket
+            // 
+            this.tsmiRestartWebSocket.Enabled = false;
+            this.tsmiRestartWebSocket.Name = "tsmiRestartWebSocket";
+            this.tsmiRestartWebSocket.Size = new System.Drawing.Size(207, 22);
+            this.tsmiRestartWebSocket.Text = "Restart WebSocket Server";
+            this.tsmiRestartWebSocket.Click += new System.EventHandler(this.tsmiRestartWebSocket_Click);
             // 
             // tsmiConfig
             // 
             this.tsmiConfig.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsmiDataDirectory,
+            this.toolStripSeparator1,
             this.tsmiReload,
             this.tsmiRecompile,
             this.tsmiReloadRtf});
@@ -103,6 +171,11 @@
             this.tsmiDataDirectory.Size = new System.Drawing.Size(186, 22);
             this.tsmiDataDirectory.Text = "Data directory";
             this.tsmiDataDirectory.Click += new System.EventHandler(this.DataDirectoryToolStripMenuItem_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(183, 6);
             // 
             // tsmiReload
             // 
@@ -130,80 +203,59 @@
             this.rtbLog.BackColor = System.Drawing.Color.White;
             this.rtbLog.DetectUrls = false;
             this.rtbLog.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.rtbLog.Location = new System.Drawing.Point(0, 0);
+            this.rtbLog.Location = new System.Drawing.Point(0, 25);
             this.rtbLog.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.rtbLog.Name = "rtbLog";
             this.rtbLog.ReadOnly = true;
-            this.rtbLog.Size = new System.Drawing.Size(480, 407);
+            this.rtbLog.Size = new System.Drawing.Size(684, 414);
             this.rtbLog.TabIndex = 0;
             this.rtbLog.Text = "";
             // 
-            // tbInput
+            // ssStatus
             // 
-            this.tbInput.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.tbInput.Location = new System.Drawing.Point(0, 407);
-            this.tbInput.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            this.tbInput.Name = "tbInput";
-            this.tbInput.Size = new System.Drawing.Size(480, 29);
-            this.tbInput.TabIndex = 1;
-            this.tbInput.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.TbInput_KeyPress);
+            this.ssStatus.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsslIrcStatus,
+            this.tsslSeparator1,
+            this.tsslWebSocketStatus,
+            this.tsslSeparator2});
+            this.ssStatus.Location = new System.Drawing.Point(0, 439);
+            this.ssStatus.Name = "ssStatus";
+            this.ssStatus.Size = new System.Drawing.Size(684, 22);
+            this.ssStatus.TabIndex = 1;
             // 
-            // scChannelsLog
+            // tsslIrcStatus
             // 
-            this.scChannelsLog.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.scChannelsLog.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
-            this.scChannelsLog.Location = new System.Drawing.Point(0, 25);
-            this.scChannelsLog.Name = "scChannelsLog";
+            this.tsslIrcStatus.Image = global::TEABot.Icons.ic_connection_disabled;
+            this.tsslIrcStatus.Name = "tsslIrcStatus";
+            this.tsslIrcStatus.Size = new System.Drawing.Size(16, 17);
             // 
-            // scChannelsLog.Panel1
+            // tsslSeparator1
             // 
-            this.scChannelsLog.Panel1.Controls.Add(this.tsChannelSelection);
-            this.scChannelsLog.Panel1MinSize = 100;
+            this.tsslSeparator1.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.tsslSeparator1.Name = "tsslSeparator1";
+            this.tsslSeparator1.Size = new System.Drawing.Size(4, 17);
             // 
-            // scChannelsLog.Panel2
+            // tsslWebSocketStatus
             // 
-            this.scChannelsLog.Panel2.Controls.Add(this.rtbLog);
-            this.scChannelsLog.Panel2.Controls.Add(this.tbInput);
-            this.scChannelsLog.Panel2MinSize = 100;
-            this.scChannelsLog.Size = new System.Drawing.Size(684, 436);
-            this.scChannelsLog.SplitterDistance = 200;
-            this.scChannelsLog.TabIndex = 0;
+            this.tsslWebSocketStatus.Image = global::TEABot.Icons.ic_connection_disabled;
+            this.tsslWebSocketStatus.Name = "tsslWebSocketStatus";
+            this.tsslWebSocketStatus.Size = new System.Drawing.Size(16, 17);
             // 
-            // tsChannelSelection
+            // tsslSeparator2
             // 
-            this.tsChannelSelection.AutoSize = false;
-            this.tsChannelSelection.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tsChannelSelection.Font = new System.Drawing.Font("Segoe UI", 12F);
-            this.tsChannelSelection.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
-            this.tsChannelSelection.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsbtnGlobal});
-            this.tsChannelSelection.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.VerticalStackWithOverflow;
-            this.tsChannelSelection.Location = new System.Drawing.Point(0, 0);
-            this.tsChannelSelection.Name = "tsChannelSelection";
-            this.tsChannelSelection.Padding = new System.Windows.Forms.Padding(1);
-            this.tsChannelSelection.Size = new System.Drawing.Size(200, 436);
-            this.tsChannelSelection.TabIndex = 3;
-            this.tsChannelSelection.Text = "toolStrip1";
-            // 
-            // tsbtnGlobal
-            // 
-            this.tsbtnGlobal.Checked = true;
-            this.tsbtnGlobal.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.tsbtnGlobal.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.tsbtnGlobal.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsbtnGlobal.Name = "tsbtnGlobal";
-            this.tsbtnGlobal.Size = new System.Drawing.Size(197, 25);
-            this.tsbtnGlobal.Text = "Global";
-            this.tsbtnGlobal.Click += new System.EventHandler(this.ChannelSelectioButton_Click);
+            this.tsslSeparator2.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.tsslSeparator2.Name = "tsslSeparator2";
+            this.tsslSeparator2.Size = new System.Drawing.Size(4, 17);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(684, 461);
-            this.Controls.Add(this.scChannelsLog);
+            this.Controls.Add(this.rtbLog);
+            this.Controls.Add(this.ssStatus);
             this.Controls.Add(this.msMain);
-            this.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.msMain;
             this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
@@ -215,13 +267,8 @@
             this.Shown += new System.EventHandler(this.MainForm_Shown);
             this.msMain.ResumeLayout(false);
             this.msMain.PerformLayout();
-            this.scChannelsLog.Panel1.ResumeLayout(false);
-            this.scChannelsLog.Panel2.ResumeLayout(false);
-            this.scChannelsLog.Panel2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.scChannelsLog)).EndInit();
-            this.scChannelsLog.ResumeLayout(false);
-            this.tsChannelSelection.ResumeLayout(false);
-            this.tsChannelSelection.PerformLayout();
+            this.ssStatus.ResumeLayout(false);
+            this.ssStatus.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -231,18 +278,28 @@
 
         private System.Windows.Forms.MenuStrip msMain;
         private System.Windows.Forms.RichTextBox rtbLog;
-        private System.Windows.Forms.TextBox tbInput;
         private System.Windows.Forms.ToolStripMenuItem tsmiConfig;
         private System.Windows.Forms.ToolStripMenuItem tsmiDataDirectory;
         private System.Windows.Forms.ToolStripMenuItem tsmiReload;
         private System.Windows.Forms.ToolStripMenuItem tsmiRecompile;
-        private System.Windows.Forms.SplitContainer scChannelsLog;
-        private System.Windows.Forms.ToolStrip tsChannelSelection;
-        private System.Windows.Forms.ToolStripButton tsbtnGlobal;
         private System.Windows.Forms.ToolStripMenuItem tsmiReloadRtf;
-        private System.Windows.Forms.ToolStripMenuItem tsmiIrc;
+        private System.Windows.Forms.ToolStripMenuItem tsmiConnection;
         private System.Windows.Forms.ToolStripMenuItem tsmiIrcConnect;
         private System.Windows.Forms.ToolStripMenuItem tsmiIrcDisconnect;
+        private System.Windows.Forms.StatusStrip ssStatus;
+        private System.Windows.Forms.ToolStripStatusLabel tsslIrcStatus;
+        private System.Windows.Forms.ToolStripStatusLabel tsslSeparator1;
+        private System.Windows.Forms.ToolStripStatusLabel tsslWebSocketStatus;
+        private System.Windows.Forms.ToolStripStatusLabel tsslSeparator2;
+        private System.Windows.Forms.ToolStripMenuItem tsmiTeaBot;
+        private System.Windows.Forms.ToolStripMenuItem tsmiTBAbout;
+        private System.Windows.Forms.ToolStripMenuItem tsmiTBGitHub;
+        private System.Windows.Forms.ToolStripSeparator tsSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem tsmiTBExit;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem tsmiIrcReconnect;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripMenuItem tsmiRestartWebSocket;
     }
 }
 

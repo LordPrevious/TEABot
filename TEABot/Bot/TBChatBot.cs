@@ -30,6 +30,12 @@ namespace TEABot.Bot
         /// </summary>
         public Dictionary<string, TBChannel> Channels { get; } = new Dictionary<string, TBChannel>();
 
+        /// <summary>
+        /// Connection status of the bot's IRC client and WebSocket Server
+        /// </summary>
+        public TBConnectionStatus ConnectionStatus { get { return mConnectionStatus; } }
+        private TBConnectionStatus mConnectionStatus;
+
         #endregion
 
         #region Constructors
@@ -151,6 +157,9 @@ namespace TEABot.Bot
                 return;
             }
 
+            mConnectionStatus.IrcClientRunning = true;
+            RaiseConnectionStatusChanged();
+
             OnInfo?.Invoke(Global, "Connecting...");
 
             // mark all channels as not joined
@@ -179,13 +188,19 @@ namespace TEABot.Bot
             mConnection.Connect(Global.Configuration.Host, (ushort)Global.Configuration.Port,
                 Global.Configuration.SSL, mCTSource.Token);
 
-            // set up web socket server
-            mWebSockets = new TWSServer((ushort)Global.Configuration.WebSocketPort);
-            mWebSockets.OnMessageReceived += WebSockets_OnMessageReceived;
-            mWebSockets.OnError += WebSockets_OnError;
-            mWebSockets.OnClientConnection += WebSockets_OnClientConnection;
-            mWebSockets.Start();
-            mHurler = new TBWebSocketHurler(mWebSockets);
+            if (Global.Configuration.UseWebSocketServer)
+            {
+                // set up web socket server
+                mWebSockets = new TWSServer((ushort)Global.Configuration.WebSocketPort);
+                mWebSockets.OnMessageReceived += WebSockets_OnMessageReceived;
+                mWebSockets.OnError += WebSockets_OnError;
+                mWebSockets.OnClientConnection += WebSockets_OnClientConnection;
+                mWebSockets.Start();
+                mHurler = new TBWebSocketHurler(mWebSockets);
+
+                mConnectionStatus.WebSocketServerRunning = true;
+                RaiseConnectionStatusChanged();
+            }
         }
 
         /// <summary>
@@ -207,11 +222,17 @@ namespace TEABot.Bot
 
             // tear down web socket server
             mHurler = null;
-            mWebSockets.Stop();
-            mWebSockets.OnMessageReceived -= WebSockets_OnMessageReceived;
-            mWebSockets.OnError -= WebSockets_OnError;
-            mWebSockets.OnClientConnection -= WebSockets_OnClientConnection;
-            mWebSockets = null;
+            if (mWebSockets != null)
+            {
+                mWebSockets.Stop();
+                mWebSockets.OnMessageReceived -= WebSockets_OnMessageReceived;
+                mWebSockets.OnError -= WebSockets_OnError;
+                mWebSockets.OnClientConnection -= WebSockets_OnClientConnection;
+                mWebSockets = null;
+
+                mConnectionStatus.WebSocketServerRunning = false;
+                RaiseConnectionStatusChanged();
+            }
 
             // disconnect from server
             mConnection.Disconnect();
@@ -237,11 +258,85 @@ namespace TEABot.Bot
             {
                 channel.Value.Joined = false;
             }
+
+            mConnectionStatus.IrcClientRunning = false;
+            RaiseConnectionStatusChanged();
+        }
+
+        /// <summary>
+        /// Reconnect to the IRC host. Cancels all running scripts.
+        /// </summary>
+        public void ReconnectIrc()
+        {
+            //  cancel all running tasks
+            Cancel();
+
+            if (mConnection == null)
+            {
+                // not connected, ignore resconnect request
+                OnWarning?.Invoke(Global, "Cannot reconnect without being connected");
+                return;
+            }
+
+            // disconnect from IRC host
+            mConnection.Disconnect();
+            mConnectionStatus.IrcClientRunning = false;
+            RaiseConnectionStatusChanged();
+
+            // mark all channels as parted
+            foreach (var channel in Channels)
+            {
+                channel.Value.Joined = false;
+            }
+
+            // reconnect to IRC host
+            mConnection.Connect(Global.Configuration.Host, (ushort)Global.Configuration.Port,
+                Global.Configuration.SSL, mCTSource.Token);
+            mConnectionStatus.IrcClientRunning = true;
+            RaiseConnectionStatusChanged();
+        }
+
+        /// <summary>
+        /// Restart the WebSocket server
+        /// </summary>
+        public void RestartWebSocketServer()
+        {
+            if (mWebSockets == null)
+            {
+                OnWarning?.Invoke(Global, "Cannot restart WebSocket server when it's not running.");
+                return;
+            }
+
+            mConnectionStatus.WebSocketServerRunning = false;
+            RaiseConnectionStatusChanged();
+            mWebSockets.Stop();
+
+            mWebSockets.Start();
+            mConnectionStatus.WebSocketServerRunning = false;
+            RaiseConnectionStatusChanged();
         }
 
         #endregion
 
         #region Events
+
+        /// <summary>
+        /// A connection status change handler
+        /// </summary>
+        /// <param name="a_sender">The event sender</param>
+        /// <param name="a_connectionStatus">The new connection statuus</param>
+        public delegate void ConnectionStatusChangeHandler(TBChatBot a_sender, TBConnectionStatus a_connectionStatus);
+        /// <summary>
+        /// Connection status change event
+        /// </summary>
+        public event ConnectionStatusChangeHandler OnConnectionStatusChanged;
+        /// <summary>
+        /// Raise a connection status change event
+        /// </summary>
+        private void RaiseConnectionStatusChanged()
+        {
+            OnConnectionStatusChanged?.Invoke(this, mConnectionStatus);
+        }
 
         /// <summary>
         /// A notice message handler
@@ -374,7 +469,7 @@ namespace TEABot.Bot
             OnInfo?.Invoke(a_channel, String.Format("Loading config for {1} from {2}...{0}",
                 Environment.NewLine,
                 a_channel.Name,
-                Properties.Settings.Default.DataDirectory));
+                a_directory));
 
             // iterate all config files in the directory
             try
@@ -744,12 +839,25 @@ namespace TEABot.Bot
 
         void Connection_OnDisconnected(object sender, string host)
         {
+            mConnectionStatus.IrcClientConnected = false;
+            RaiseConnectionStatusChanged();
+
             OnNotice?.Invoke(Global, String.Format("Disconnected from {0}", host));
         }
 
         void Connection_OnError(object sender, TIrcConnection.IrcConnectionError error, string message)
         {
             OnError?.Invoke(Global, String.Format("{0}: {1}", error, message));
+
+            switch (error)
+            {
+                case TIrcConnection.IrcConnectionError.ConnectionFailed:
+                case TIrcConnection.IrcConnectionError.ConnectionLost:
+                    Disconnect();
+                    break;
+                default:
+                    break;
+            }
         }
 
         private void Connection_OnInfo(object sender, string message)
@@ -793,6 +901,9 @@ namespace TEABot.Bot
         {
             if (successful)
             {
+                mConnectionStatus.IrcClientConnected = true;
+                RaiseConnectionStatusChanged();
+
                 OnNotice?.Invoke(Global, String.Format("Successfully logged in to {0}", host));
 
                 foreach (var channel in Channels)
@@ -807,7 +918,7 @@ namespace TEABot.Bot
             {
                 OnNotice?.Invoke(Global, String.Format("Login to {0} failed. Closing connection.", host));
 
-                mConnection.Disconnect();
+                Disconnect();
             }
         }
 
@@ -919,6 +1030,9 @@ namespace TEABot.Bot
 
         private void WebSockets_OnClientConnection(TWSServer a_sender, bool a_connected, int a_connectionCount)
         {
+            mConnectionStatus.WebSocketClientCount = a_connectionCount;
+            RaiseConnectionStatusChanged();
+
             OnInfo?.Invoke(Global, String.Format("WSS: Client connection {0} ({1} total)",
                 a_connected ? "established" : "dropped",
                 a_connectionCount));

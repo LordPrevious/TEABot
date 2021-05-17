@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TEABot": {
+      "commandName": "Project",
+      "commandLineArgs": "/noConnect"
+    }
+  }
+}
