@@ -517,6 +517,7 @@ namespace TEABot.Bot
             }
 
             // check if any script is triggered by this command
+            command = command.ToLowerInvariant();
             if (a_channel.TriggeredScripts.TryGetValue(command, out TSCompiledScript script)
                 || ((a_channel != Global) && Global.TriggeredScripts.TryGetValue(command, out script)))
             {
