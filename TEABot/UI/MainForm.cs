@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -15,19 +16,24 @@ namespace TEABot.UI
     public partial class MainForm : Form
     {
         /// <summary>
+        /// Whether to automatically connect to the IRC server after startup
+        /// </summary>
+        private bool mAutoConnect = true;
+
+        /// <summary>
+        /// Do not use data directory from settings, but from command line
+        /// </summary>
+        private bool mOverrideDataDirectory = false;
+
+        /// <summary>
+        /// Data directory from command line
+        /// </summary>
+        private string mCmdDataDirectory = String.Empty;
+
+        /// <summary>
         /// Chat bot core
         /// </summary>
         private readonly TBChatBot mChatBot = new();
-
-        /// <summary>
-        /// The currently selected, active channel from mChannels/mGlobal
-        /// </summary>
-        private TBChannel mActiveChannel = null;
-
-        /// <summary>
-        /// The tool strip button associated with the currently active channel
-        /// </summary>
-        private ToolStripButton mActiveChannelButton = null;
 
         /// <summary>
         /// RTF template for outgoing messages
@@ -55,6 +61,15 @@ namespace TEABot.UI
         private RtfTemplate mRTFError = new();
 
         /// <summary>
+        /// Get the configuration data directory path
+        /// </summary>
+        /// <returns>Data directory path</returns>
+        private string GetDataDirectory()
+        {
+            return mOverrideDataDirectory ? mCmdDataDirectory : Properties.Settings.Default.DataDirectory;
+        }
+
+        /// <summary>
         /// Open the form for data directory configuration
         /// </summary>
         private void OpenDataDirectoryConfigurationForm()
@@ -64,9 +79,9 @@ namespace TEABot.UI
             if (res == DialogResult.OK)
             {
                 ReloadRTFTemplates();
-                mChatBot.ReloadConfig(Properties.Settings.Default.DataDirectory);
-                mChatBot.ReloadScripts(Properties.Settings.Default.DataDirectory);
-                UpdateChannelList();
+                var dataDir = GetDataDirectory();
+                mChatBot.ReloadConfig(dataDir);
+                mChatBot.ReloadScripts(dataDir);
             }
         }
 
@@ -92,7 +107,7 @@ namespace TEABot.UI
         {
             try
             {
-                string templateText = File.ReadAllText(Path.Combine(Properties.Settings.Default.DataDirectory, a_filename));
+                string templateText = File.ReadAllText(Path.Combine(GetDataDirectory(), a_filename));
                 ao_template = new RtfTemplate(templateText);
             }
             catch (Exception e)
@@ -101,58 +116,6 @@ namespace TEABot.UI
                     a_filename,
                     e.Message));
                 ao_template = new RtfTemplate();
-            }
-        }
-
-        /// <summary>
-        /// Update the channel selection list to show channels in mChannels
-        /// </summary>
-        private void UpdateChannelList()
-        {
-            // prepare map from channel name to button
-            var channelButtons = new Dictionary<string, ToolStripButton>();
-
-            // get current buttons
-            foreach (var button in tsChannelSelection.Items.OfType<ToolStripButton>())
-            {
-                // keep only buttons which still have a channel
-                if (mChatBot.Channels.ContainsKey(button.Text))
-                {
-                    channelButtons[button.Text] = button;
-                }
-                else if (button == mActiveChannelButton)
-                {
-                    // the active channel no longer exists
-                    mActiveChannel = mChatBot.Global;
-                    mActiveChannelButton = tsbtnGlobal;
-                    tsbtnGlobal.Checked = true;
-                }
-            }
-
-            // remove them all from the tool strip
-            tsChannelSelection.Items.Clear();
-
-            // add back the global channel button
-            tsChannelSelection.Items.Add(tsbtnGlobal);
-
-            // create buttons for missing channels
-            var activeChannelName = mActiveChannel.Name.ToLowerInvariant();
-            foreach (var channel in mChatBot.Channels.Keys)
-            {
-                if (!channelButtons.ContainsKey(channel))
-                {
-                    channelButtons[channel] = new ToolStripButton(channel, null, ChannelSelectioButton_Click)
-                    {
-                        DisplayStyle = ToolStripItemDisplayStyle.Text,
-                        Checked = channel.Equals(activeChannelName)
-                    };
-                }
-            }
-
-            // add buttons back to toolstrip
-            foreach (var button in channelButtons.Values)
-            {
-                tsChannelSelection.Items.Add(button);
             }
         }
 
@@ -209,6 +172,53 @@ namespace TEABot.UI
             rtbLog.ScrollToCaret();
         }
 
+        /// <summary>
+        /// Handle connection status dependend display and access
+        /// </summary>
+        /// <param name="a_connectionStatus">The bot connection status</param>
+        private void UpdateConnectionStatusDisplay(TBConnectionStatus a_connectionStatus)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new MethodInvoker(() => { UpdateConnectionStatusDisplay(a_connectionStatus); }));
+            }
+
+            if (a_connectionStatus.IrcClientRunning)
+            {
+                if (a_connectionStatus.IrcClientConnected)
+                {
+                    tsslIrcStatus.Image = Icons.ic_connected;
+                    tsmiIrcReconnect.Enabled = true;
+                }
+                else
+                {
+                    tsslIrcStatus.Image = Icons.ic_connecting;
+                    tsmiIrcReconnect.Enabled = false;
+                }
+                tsmiIrcConnect.Enabled = false;
+            }
+            else
+            {
+                tsslIrcStatus.Image = Icons.ic_disconnected;
+                tsmiIrcConnect.Enabled = true;
+                tsmiIrcReconnect.Enabled = false;
+            }
+            if (a_connectionStatus.WebSocketServerRunning)
+            {
+                tsslWebSocketStatus.Image = (a_connectionStatus.WebSocketClientCount > 0)
+                    ? Icons.ic_connected
+                    : Icons.ic_connecting;
+                tsslWebSocketStatus.Text = a_connectionStatus.WebSocketClientCount.ToString();
+                tsmiRestartWebSocket.Enabled = true;
+            }
+            else
+            {
+                tsslWebSocketStatus.Image = Icons.ic_connection_disabled;
+                tsslWebSocketStatus.Text = String.Empty;
+                tsmiRestartWebSocket.Enabled = false;
+            }
+        }
+
         private void MChatBot_OnChatMessage(TBChannel a_channel, TBMessageDirection a_direction, string a_sender, string a_message)
         {
             RtfTemplate template = a_direction switch
@@ -244,22 +254,14 @@ namespace TEABot.UI
             LogMessage(mRTFError, a_message, a_channel, String.Empty);
         }
 
+        private void MChatBot_OnConnectionStatusChanged(TBChatBot a_sender, TBConnectionStatus a_connectionStatus)
+        {
+            UpdateConnectionStatusDisplay(a_connectionStatus);
+        }
+
         public MainForm()
         {
             InitializeComponent();
-        }
-
-        private void TbInput_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            if (e.KeyChar == (char)Keys.Return)
-            {
-                var input = tbInput.Text;
-                tbInput.Text = String.Empty;
-                e.Handled = true;
-
-                // send via chat bot
-                mChatBot.SendMessage(mActiveChannel, input);
-            }
         }
 
         private void DataDirectoryToolStripMenuItem_Click(object sender, EventArgs e)
@@ -269,7 +271,7 @@ namespace TEABot.UI
 
         private void MainForm_Shown(object sender, EventArgs e)
         {
-            if (!Directory.Exists(Properties.Settings.Default.DataDirectory))
+            if (!mOverrideDataDirectory && !Directory.Exists(Properties.Settings.Default.DataDirectory))
             {
                 OpenDataDirectoryConfigurationForm();
             }
@@ -277,14 +279,12 @@ namespace TEABot.UI
 
         private void TsmiReload_Click(object sender, EventArgs e)
         {
-            mChatBot.ReloadConfig(Properties.Settings.Default.DataDirectory);
-            UpdateChannelList();
+            mChatBot.ReloadConfig(GetDataDirectory());
         }
 
         private void TsmiRecompile_Click(object sender, EventArgs e)
         {
-            mChatBot.ReloadScripts(Properties.Settings.Default.DataDirectory);
-            UpdateChannelList();
+            mChatBot.ReloadScripts(GetDataDirectory());
         }
 
         private void TsmiReloadRtf_Click(object sender, EventArgs e)
@@ -294,21 +294,41 @@ namespace TEABot.UI
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            // handle command line arguments
+            var cmdArgs = Environment.GetCommandLineArgs();
+            // disable autoconnect
+            if (cmdArgs.Any(a => a.Equals("/noConnect", StringComparison.InvariantCultureIgnoreCase)))
+            {
+                mAutoConnect = false;
+            }
+            // override data directory
+            if ((cmdArgs.Length > 1)
+                && Directory.Exists(cmdArgs.Last()))
+            {
+                mCmdDataDirectory = cmdArgs.Last();
+                mOverrideDataDirectory = true;
+                // block opening data directory configuration form
+                tsmiDataDirectory.Enabled = false;
+            }
+
+            // set initial connection status
+            UpdateConnectionStatusDisplay(mChatBot.ConnectionStatus);
+
             // attach chatbot events
             mChatBot.OnChatMessage += MChatBot_OnChatMessage;
             mChatBot.OnInfo += MChatBot_OnInfo;
             mChatBot.OnNotice += MChatBot_OnNotice;
             mChatBot.OnWarning += MChatBot_OnWarning;
             mChatBot.OnError += MChatBot_OnError;
-            // activate global channel
-            mActiveChannel = mChatBot.Global;
-            mActiveChannelButton = tsbtnGlobal;
-            if (Directory.Exists(Properties.Settings.Default.DataDirectory))
+            mChatBot.OnConnectionStatusChanged += MChatBot_OnConnectionStatusChanged;
+            // load config
+            var dataDir = GetDataDirectory();
+            if (Directory.Exists(dataDir))
             {
                 // load and print motd
                 try
                 {
-                    string motd = File.ReadAllText(Path.Combine(Properties.Settings.Default.DataDirectory, "motd.rtf"));
+                    string motd = File.ReadAllText(Path.Combine(dataDir, "motd.rtf"));
                     rtbLog.Rtf = motd;
                 }
                 catch
@@ -317,9 +337,13 @@ namespace TEABot.UI
                 }
                 // load config and scripts
                 ReloadRTFTemplates();
-                mChatBot.ReloadConfig(Properties.Settings.Default.DataDirectory);
-                mChatBot.ReloadScripts(Properties.Settings.Default.DataDirectory);
-                UpdateChannelList();
+                mChatBot.ReloadConfig(dataDir);
+                mChatBot.ReloadScripts(dataDir);
+                // autoconnect
+                if (mAutoConnect)
+                {
+                    mChatBot.Connect();
+                }
             }
         }
 
@@ -335,23 +359,6 @@ namespace TEABot.UI
             mChatBot.OnError -= MChatBot_OnError;
         }
 
-        private void ChannelSelectioButton_Click(object sender, EventArgs e)
-        {
-            if (sender is not ToolStripButton tsbSender) return;
-            if (tsbSender == mActiveChannelButton) return;
-            mActiveChannelButton.Checked = false;
-            if (mChatBot.Channels.TryGetValue(tsbSender.Text, out mActiveChannel))
-            {
-                mActiveChannelButton = tsbSender;
-            }
-            else
-            {
-                mActiveChannel = mChatBot.Global;
-                mActiveChannelButton = tsbtnGlobal;
-            }
-            mActiveChannelButton.Checked = true;
-        }
-
         private void TsmiIrcConnect_Click(object sender, EventArgs e)
         {
             mChatBot.Connect();
@@ -360,6 +367,35 @@ namespace TEABot.UI
         private void TsmiIrcDisconnect_Click(object sender, EventArgs e)
         {
             mChatBot.Disconnect();
+        }
+
+        private void TsmiTBGitHub_Click(object sender, EventArgs e)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = Properties.Resources.GitHubUrl,
+                UseShellExecute = true
+            });
+        }
+
+        private void TsmiTBExit_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void TsmiTBAbout_Click(object sender, EventArgs e)
+        {
+            new AboutForm().ShowDialog(this);
+        }
+
+        private void tsmiIrcReconnect_Click(object sender, EventArgs e)
+        {
+            mChatBot.ReconnectIrc();
+        }
+
+        private void tsmiRestartWebSocket_Click(object sender, EventArgs e)
+        {
+            mChatBot.RestartWebSocketServer();
         }
     }
 }

@@ -37,7 +37,7 @@ namespace TEABot.IRC
         /// <summary>
         /// TCP client to connect to the IRC server
         /// </summary>
-        private readonly TcpClient mTcpClient = new();
+        private TcpClient mTcpClient = null;
         /// <summary>
         /// Input/output stream for server communications,
         /// points to either the TCP client's network stream directly, or to the SSL encryption stream
@@ -113,10 +113,10 @@ namespace TEABot.IRC
             if (!mConnected)
                 return false;
 
-            if ((mTcpClient == null)
-                || (!mTcpClient.Connected))
+            if ((mTcpClient == null) || (!mTcpClient.Connected))
             {
                 mConnected = false;
+                mTcpClient = null;
                 RaiseError(IrcConnectionError.ConnectionLost, "Lost connection.");
                 return false;
             }
@@ -276,7 +276,7 @@ namespace TEABot.IRC
                 return;
             }
 
-            if (mTcpClient.Connected)
+            if ((mTcpClient != null) && mTcpClient.Connected)
             {
                 // set up stream
                 if (mUseSSL)
@@ -344,7 +344,11 @@ namespace TEABot.IRC
             }
             else
             {
-                mTcpClient.Close();
+                if (mTcpClient != null)
+                {
+                    mTcpClient.Close();
+                    mTcpClient = null;
+                }
                 RaiseError(IrcConnectionError.ConnectionFailed, "Failed SSL authentication.");
             }
         }
@@ -455,7 +459,7 @@ namespace TEABot.IRC
         /// <param name="a_ct">Cancellation token for async tasks</param>
         public void Connect(string a_hostname, ushort a_port, bool a_useSSL, CancellationToken a_ct)
         {
-            if (mConnecting || Connected) return;
+            if (mConnecting || Connected || (mTcpClient != null)) return;
 
             mConnecting = true;
 
@@ -466,6 +470,7 @@ namespace TEABot.IRC
 
             try
             {
+                mTcpClient = new();
                 var taskTcpConnect = mTcpClient.ConnectAsync(mHostname, mPort, mCt);
                 taskTcpConnect.AsTask().ContinueWith(FinishConnect, mCt);
             }
@@ -483,7 +488,11 @@ namespace TEABot.IRC
         public void Disconnect()
         {
             mConnected = mConnecting = false;
-            mTcpClient.Close();
+            if (mTcpClient != null)
+            {
+                mTcpClient.Close();
+                mTcpClient = null;
+            }
 
             RaiseDisconnected(mHostname);
         }

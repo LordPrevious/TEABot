@@ -10,7 +10,7 @@ namespace TEABot.TEAScript.Instructions.Metadata
     [TSKeyword("command")]
     public class TSIMCommand : TSIScriptMetadata
     {
-        private List<string> mCommands = new List<string>();
+        private List<string> mCommands = new();
 
         public override void Apply(TSCompiledScript a_targetScript)
         {

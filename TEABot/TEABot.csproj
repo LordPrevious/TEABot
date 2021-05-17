@@ -8,6 +8,8 @@
     
     <RootNamespace>TEABot</RootNamespace>
     <AssemblyName>TEABot</AssemblyName>
+    <ApplicationIcon>TEABot_Icon.ico</ApplicationIcon>
+    <StartupObject>TEABot.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,6 +17,11 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <Compile Update="Icons.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Icons.resx</DependentUpon>
+    </Compile>
     <Compile Update="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
@@ -23,6 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="Icons.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Icons.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Update="UI\DataDirectoryConfigForm.resx">
       <DependentUpon>DataDirectoryConfigForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -36,6 +47,7 @@
     <Compile Update="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
   </ItemGroup>
 

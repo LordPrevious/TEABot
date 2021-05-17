@@ -137,9 +137,19 @@ namespace TEABot.Bot
         /// <summary>
         /// Path to directory where persistent data files are to be stored.
         /// If relative, will be assumed to be relative to config base directory.
+        /// Ignored on per-channel configurations
+        /// Not inherited
         /// </summary>
         [TBOptionName("storageDirectory")]
         public string StorageDirectory { get; private set; } = ".data";
+
+        /// <summary>
+        /// Enable or disable the WebSocket Server to use with the hurl instruction.
+        /// Ignored on per-channel configurations
+        /// Not inherited
+        /// </summary>
+        [TBOptionName("webSocketServer")]
+        public bool UseWebSocketServer { get; private set; } = true;
 
         /// <summary>
         /// The web socket server port
