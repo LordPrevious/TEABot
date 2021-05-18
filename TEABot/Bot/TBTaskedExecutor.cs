@@ -57,16 +57,20 @@ namespace TEABot.Bot
         /// </summary>
         private readonly ITSHurler mHurler;
 
+        private readonly ITSListProvider mLists;
+
         /// <summary>
         /// Initialize a tasked executor
         /// </summary>
         /// <param name="a_storage">Storage provider</param>
         /// <param name="a_hurler">Hurler provider</param>
+        /// <param name="a_lists">List provider</param>
+        /// <param name="a_channel">Channel the script is executed for</param>
         /// <param name="a_script">The script to execute</param>
         /// <param name="a_arguments">The arguments to the script's parameters</param>
         /// <param name="a_sender">The sender of the message that triggered script execution</param>
         /// <param name="a_ct">Used to cancel scheduled tasks</param>
-        public TBTaskedExecutor(ITSStorage a_storage, ITSHurler a_hurler, TBChannel a_channel, TSCompiledScript a_script, string a_arguments, string a_sender,
+        public TBTaskedExecutor(ITSStorage a_storage, ITSHurler a_hurler, ITSListProvider a_lists, TBChannel a_channel, TSCompiledScript a_script, string a_arguments, string a_sender,
             CancellationToken a_ct)
             : base(a_script, a_arguments)
         {
@@ -75,6 +79,7 @@ namespace TEABot.Bot
             mSender = a_sender;
             mStorage = a_storage;
             mHurler = a_hurler;
+            mLists = a_lists;
         }
 
         public override void Execute()
@@ -94,10 +99,15 @@ namespace TEABot.Bot
             a_context.Values["$channel"] = mChannel.Name;
             a_context.Values["$isSuperUser"] = mChannel.Configuration.SuperUsers.Any(su => su.Equals(mSender, StringComparison.InvariantCultureIgnoreCase));
             a_context.Values["$sender"] = mSender;
+            a_context.Values["$timestamp"] = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
             // additional context items
             a_context.Storage = mStorage;
             a_context.Hurler = mHurler;
+
+            // list manager for this execution
+            a_context.Lists = new TSListManager(mLists, a_context.Values);
+            // here, additional lists for this executor only can be added to a_context.Lists
         }
 
         private void RunLocked()

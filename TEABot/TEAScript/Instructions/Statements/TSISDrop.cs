@@ -17,11 +17,7 @@ namespace TEABot.TEAScript.Instructions.Statements
 
         protected override bool Parse(string a_instructionArguments)
         {
-            var validator = new TSValidator(ParsingBroadcaster);
-
-            var words = SplitWordsArguments(a_instructionArguments);
-            if (validator.ContainsEnoughArguments(words, 1)
-                && SingleValueArgument(words[0], out ITSValueArgument tmpTargetValue, true)
+            if (SingleValueArgument(a_instructionArguments, out ITSValueArgument tmpTargetValue, true)
                 && (tmpTargetValue is TSNamedValueArgument namedTargetValue)
                 && VariableNameValueArgument(namedTargetValue, out string _))
             {

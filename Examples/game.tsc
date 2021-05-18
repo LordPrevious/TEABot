@@ -1,0 +1,45 @@
+script Game
+description Set or get the current game (bot only, does not affect twitch; used by bot e.g. for quotes)
+command game
+
+##################################################
+
+optional game
+type tail
+description The game to set, super user only
+
+##################################################
+
+# open storage
+storage:open stream_info
+
+# check if user is permitted to change the name
+jump @canEdit $isSuperUser
+jump @loadGame 1
+@canEdit
+# check if game name is provided
+has !hasArgument ?game
+jump @doEdit !hasArgument
+jump @loadGame 1
+@doEdit
+# edit stored game
+storage:set "game ?game
+storage:save
+
+@loadGame
+# load game
+storage:has !hasGame "game
+jump @hasGame !hasGame
+write No game has been set.
+flush
+jump @closeStorage 1
+@hasGame
+storage:get !game "game
+# print game
+write The current game is: 
+print !game
+flush
+
+@closeStorage
+storage:close
+end
