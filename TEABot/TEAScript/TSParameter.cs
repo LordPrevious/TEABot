@@ -24,17 +24,22 @@ namespace TEABot.TEAScript
         /// <summary>
         /// Description of the parameter for dynamic documentation
         /// </summary>
-        public string Description { get; set; }
+        public string Description { get; set; } = String.Empty;
 
         /// <summary>
         /// Expected type of the value for pre-execution validity checking
         /// </summary>
-        public TSEParameterType Type { get; set; }
+        public TSEParameterType Type { get; set; } = TSEParameterType.UNKNOWN;
 
         /// <summary>
         /// The default value of this parameter if it is optional
         /// </summary>
-        public string DefaultValue { get; set; }
+        public string DefaultValue { get; set; } = String.Empty;
+
+        /// <summary>
+        /// True iff a default value has been specified for this optional parameter
+        /// </summary>
+        public bool HasDefaultValue { get; set; } = false;
 
         /// <summary>
         /// Initialize a new parameter specification
@@ -45,9 +50,6 @@ namespace TEABot.TEAScript
         {
             Name = a_name;
             Required = a_required;
-            Description = String.Empty;
-            Type = TSEParameterType.UNKNOWN;
-            DefaultValue = String.Empty;
         }
     }
 }

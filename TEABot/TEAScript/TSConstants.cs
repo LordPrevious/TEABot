@@ -47,6 +47,11 @@ namespace TEABot.TEAScript
         public const char JumpLabelPrefix = '@';
 
         /// <summary>
+        /// Prefix for special internal lists
+        /// </summary>
+        public const char SpecialListPrefix = '#';
+
+        /// <summary>
         /// All known value prefixes
         /// </summary>
         public static readonly char[] ValuePrefixes = new char[]

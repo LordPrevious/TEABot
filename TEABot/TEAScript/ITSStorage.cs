@@ -38,8 +38,9 @@ namespace TEABot.TEAScript
         /// </summary>
         /// <param name="a_owner">The lock owner to enable internal lock holder checking.</param>
         /// <param name="a_storageName">Name of the storage object to open.</param>
+        /// <param name="a_isList">Whether to treat the storage object as a list.</param>
         /// <returns>True iff the storage object has been opened.</returns>
-        public bool Open(object a_owner, string a_storageName);
+        public bool Open(object a_owner, string a_storageName, bool a_isList = false);
 
         /// <summary>
         /// Close the storage object opened with Open() so internal resources can be freed.
@@ -98,5 +99,12 @@ namespace TEABot.TEAScript
         /// <param name="a_keyName">Identifier for the stored data.</param>
         /// <returns>True iff data with said identifier has been removed.</returns>
         public bool Remove(object a_owner, string a_keyName);
+
+        /// <summary>
+        /// Get the storage list opened via Open() by supplying true for a_isList.
+        /// </summary>
+        /// <param name="a_owner">The lock owner to enable internal lock holder checking.</param>
+        /// <returns>The list or null if none was opened</returns>
+        public TSValueList GetList(object a_owner);
     }
 }

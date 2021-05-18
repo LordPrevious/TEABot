@@ -7,13 +7,8 @@ namespace TEABot.TEAScript.Instructions.Statements.Storage
     /// Save the storage object to disk
     /// </summary>
     [TSKeyword("storage:save")]
-    public class TSISStorageSave : TSIStatement
+    public class TSISStorageSave : TSISNoArguments
     {
-        protected override bool Parse(string a_instructionArguments)
-        {
-            return true;
-        }
-
         public override ITSControlFlow Execute(TSExecutionContext a_context)
         {
             a_context.Storage?.Save(a_context);

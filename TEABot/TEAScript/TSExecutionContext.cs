@@ -30,6 +30,11 @@ namespace TEABot.TEAScript
         public ITSStorage Storage { get; set; } = null;
 
         /// <summary>
+        /// A list manager.
+        /// </summary>
+        public TSListManager Lists { get; set; } = null;
+
+        /// <summary>
         /// A broadcaster to send execution messages to.
         /// </summary>
         public TSBroadcaster Broadcaster { get; set; } = null;

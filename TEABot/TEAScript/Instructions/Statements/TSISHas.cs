@@ -4,18 +4,18 @@ using TEABot.TEAScript.Attributes;
 namespace TEABot.TEAScript.Instructions.Statements
 {
     /// <summary>
-    /// Store a value in a variable
+    /// Check if a value has been set
     /// </summary>
-    [TSKeyword("store")]
-    public class TSISStore : TSIStatement
+    [TSKeyword("has")]
+    public class TSISHas : TSIStatement
     {
         /// <summary>
-        /// Name of the target variable to store the value in
+        /// Name of the target variable to store the check result in
         /// </summary>
         private string mTargetName = String.Empty;
 
         /// <summary>
-        /// The value to store
+        /// The value to check for
         /// </summary>
         private ITSValueArgument mSourceValue = new TSConstantNumberArgument(0L);
 
@@ -33,7 +33,7 @@ namespace TEABot.TEAScript.Instructions.Statements
 
         public override ITSControlFlow Execute(TSExecutionContext a_context)
         {
-            a_context.Values[mTargetName] = mSourceValue.GetValue(a_context.Values);
+            a_context.Values[mTargetName] = mSourceValue.HasValue(a_context.Values);
             return TSFlow.Next;
         }
     }

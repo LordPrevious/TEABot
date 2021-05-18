@@ -1,0 +1,17 @@
+script Winner Lottery
+description Picks a random user and makes 'em a winner
+command winner
+
+##################################################
+
+# pick a random item from the #users list
+list:load #users
+list:unique "name
+list:random !winner.*
+
+# notify the winner
+write Congratulations, 
+print !winner.name
+write , you have won!
+flush
+end

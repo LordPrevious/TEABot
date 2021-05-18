@@ -41,9 +41,15 @@ namespace TEABot.Bot
 
         /// <summary>
         /// Data associated with the currently opened storage object,
-        /// null when no object is open.
+        /// null when no regular (non-list) object is open.
         /// </summary>
         private MultiValueData mOpenData = null;
+
+        /// <summary>
+        /// Data associated with the currently opened storage object,
+        /// null when no list object is open.
+        /// </summary>
+        private TSValueList mOpenList = null;
 
         /// <summary>
         /// Name of the opened storage object
@@ -262,7 +268,7 @@ namespace TEABot.Bot
         {
             if (!VerifyOwner(a_owner, nameof(Clear))) return false;
 
-            if (mOpenData != null)
+            if ((mOpenData != null) || (mOpenList != null))
             {
                 Broadcaster.Warn("Clearing storage when another is open. Closing open storage.");
                 Close(a_owner);
@@ -291,12 +297,13 @@ namespace TEABot.Bot
         public bool Close(object a_owner)
         {
             if (!VerifyOwner(a_owner, nameof(Close))) return false;
-            if (mOpenData == null)
+            if ((mOpenData == null) && (mOpenList == null))
             {
                 Broadcaster.Warn("No storage object is open, so there is nothing to close.");
                 return false;
             }
             mOpenData = null;
+            mOpenList = null;
             mOpenStorageName = String.Empty;
             return true;
         }
@@ -360,11 +367,11 @@ namespace TEABot.Bot
             return (a_owner == mOwner);
         }
 
-        public bool Open(object a_owner, string a_storageName)
+        public bool Open(object a_owner, string a_storageName, bool a_isList)
         {
             if (!VerifyOwner(a_owner, nameof(Open))) return false;
 
-            if (mOpenData != null)
+            if ((mOpenData != null) || (mOpenList != null))
             {
                 Broadcaster.Error("Opening storage when another is already open. Closing both do avoid data corruption.");
                 Close(a_owner);
@@ -400,7 +407,14 @@ namespace TEABot.Bot
                 {
                     using var fileStream = File.OpenRead(fullStoragePath);
                     var jsonData = JsonDocument.Parse(fileStream);
-                    mOpenData = new MultiValueData(jsonData.RootElement);
+                    if (a_isList)
+                    {
+                        mOpenList = TSValueListExt.FromJson(jsonData.RootElement);
+                    }
+                    else
+                    {
+                        mOpenData = new MultiValueData(jsonData.RootElement);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -410,8 +424,15 @@ namespace TEABot.Bot
             }
             else
             {
-                // initialize new empty storage object
-                mOpenData = new MultiValueData();
+                if (a_isList)
+                {
+                    mOpenList = new();
+                }
+                else
+                {
+                    // initialize new empty storage object
+                    mOpenData = new MultiValueData();
+                }
             }
 
             mOpenStorageName = a_storageName;
@@ -434,15 +455,32 @@ namespace TEABot.Bot
 
         public bool Save(object a_owner)
         {
-            if (!VerifyStorageAccess(a_owner, nameof(Save))) return false;
+            if (!VerifyOwner(a_owner, nameof(Save))) return false;
 
             var fullStoragePath = GetStorageFilePath(mOpenStorageName);
             try
             {
                 using var fileStream = File.Create(fullStoragePath);
                 using var jsonWriter = new Utf8JsonWriter(fileStream);
-                var jsonData = mOpenData.ToUnspecificObject();
-                JsonSerializer.Serialize(jsonWriter, jsonData);
+
+                object jsonData = null;
+                if (mOpenList != null)
+                {
+                    jsonData = mOpenList.ToUnspecificObject();
+                }
+                else
+                {
+                    if (!VerifyOpen(nameof(Save))) return false;
+                    jsonData = mOpenData.ToUnspecificObject();
+                }
+                if (jsonData != null)
+                {
+                    JsonSerializer.Serialize(jsonWriter, jsonData);
+                }
+                else
+                {
+                    return false;
+                }
             }
             catch (Exception ex)
             {
@@ -479,6 +517,18 @@ namespace TEABot.Bot
                 mOpenData.Values[a_keyName] = new SingleValueData(a_valueName.GetValue(a_values));
             }
             return true;
+        }
+
+        public TSValueList GetList(object a_owner)
+        {
+            if (!VerifyOwner(a_owner, nameof(GetList))) return null;
+
+            if (mOpenList == null)
+            {
+                Broadcaster.Error("List must be opened first for operation: {0}", nameof(GetList));
+            }
+
+            return mOpenList;
         }
 
         #endregion

@@ -58,8 +58,16 @@ namespace TEABot.TEAScript
                             parameter.Name);
                         return false;
                     }
-                    // else use default value for optional parameters
-                    argument = parameter.DefaultValue;
+                    else if (parameter.HasDefaultValue)
+                    {
+                        // use default value for optional parameters
+                        argument = parameter.DefaultValue;
+                    }
+                    else
+                    {
+                        // optional parameter should not be set
+                        continue;
+                    }
                 }
                 // get prefixed parameter name
                 var prefixedName = TSConstants.ArgumentPrefix + parameter.Name;

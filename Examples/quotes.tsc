@@ -1,0 +1,135 @@
+script Quotes
+description Quotes read and write access
+command quote
+
+##################################################
+
+optional action
+type string
+description Quote list action: add - or ID of specific quote to get
+
+optional message
+type tail
+description The quote to add
+
+##################################################
+
+## check for action parameter
+has !hasAction ?action
+jump @hasAction !hasAction
+
+## Print random quote
+jump @doPrint 1
+
+## Parse action
+@hasAction
+# check for known action
+match !doAdd ?action add
+jump @doAdd !doAdd
+# assume quote ID, subtract 1 to get list index
+subtract !quoteIndex ?action 1
+jump @doPrint 1
+
+
+########## Add a new quote
+@doAdd
+## check if quote message is given
+has !hasMessage ?message
+jump @hasMessage !hasMessage
+# no message no add
+end
+@hasMessage
+## get game from stream info
+storage:open stream_info
+storage:has !hasGame "game
+jump @hasGame !hasGame
+store !game "—
+jump @loadedGame 1
+@hasGame
+storage:get !game "game
+@loadedGame
+storage:close
+## prepare quote data to save
+store !quote.id $list.count
+store !quote.quote ?message
+store !quote.submitter $sender
+store !quote.game !game
+timestamp yy-MM-dd HH:mm
+store !quote.timestamp $timestamp
+## get quote list
+storage:list quotes.list
+## add quote to list
+list:add !quote.*
+## save list and close storage
+storage:save
+storage:close
+## confirm adding of quote
+write Danke, 
+print $sender
+write , your quote has been added as #
+print $list.count
+write .
+flush
+end
+
+
+########## Print a quote
+@doPrint
+## init max tries for random quote (to avoid deleted quotes)
+store !randomQuoteTries 0
+## get quote list
+storage:list quotes.list
+# close immediately, as we only want to read
+storage:close
+## check if specific quote is requested
+has !hasQuoteIndex !quoteIndex
+jump @hasQuoteIndex !hasQuoteIndex
+## get random quote index
+@randomQuoteIndex
+# limit max tries
+add !randomQuoteTries !randomQuoteTries 1
+equal !maxTriesReached !randomQuoteTries 10
+jump @maxTriesReached !maxTriesReached
+# get random index
+randomize !quoteIndex 0 $list.lastIndex
+## load item at desired index
+@hasQuoteIndex
+# discard any leftover quote data
+drop !quote.*
+list:get !quote.* !quoteIndex
+# load item into variables
+# check if list item with index was loaded, fetch random if not
+jump @randomQuoteIndex $list.outOfBounds
+# check if quote has content, else, try next random quote
+has !hasQuote !quote.quote
+jump @printQuote !hasQuote
+jump @randomQuoteIndex 1
+## print quote
+@printQuote
+# index to ID
+add !quoteId $list.index 1
+# write response
+write Quote #
+print !quoteId
+write : 
+print !quote.quote
+write  [
+print !quote.timestamp
+write  – 
+print !quote.game
+write ]
+flush
+end
+
+## max random tries exceeded
+@maxTriesReached
+write Sorry, 
+print $sender
+write , but all I can find is trash.
+flush
+end
+
+
+
+
+
