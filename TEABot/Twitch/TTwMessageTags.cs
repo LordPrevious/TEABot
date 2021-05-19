@@ -7,7 +7,7 @@ namespace TEABot.Twitch
     /// <summary>
     /// Regular chat message tags w/ extended sender and message information
     /// </summary>
-    class TTwMessageTags
+    public class TTwMessageTags
     {
         #region Public data
 
@@ -50,7 +50,7 @@ namespace TEABot.Twitch
         /// </summary>
         /// <param name="a_tags">The message tags</param>
         /// <param name="a_message">The message contents for which the tags are parsed</param>
-        public TTwMessageTags(Dictionary<string, string> a_tags, string a_message)
+        public TTwMessageTags(IReadOnlyDictionary<string, string> a_tags, string a_message)
         {
             if (a_tags == null) throw new ArgumentNullException(nameof(a_tags));
 
@@ -87,7 +87,7 @@ namespace TEABot.Twitch
                 Emotes = new(tagEmotes, a_message);
             }
             // message id
-            if (a_tags.TryGetValue(TTwTagNames.MSG_ID, out string tagMessageId))
+            if (a_tags.TryGetValue(TTwTagNames.ID, out string tagMessageId))
             {
                 MessageId = tagMessageId;
             }

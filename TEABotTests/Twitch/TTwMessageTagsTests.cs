@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
 using TEABot.Twitch;
 
 namespace TEABotTests.Twitch
@@ -19,7 +20,7 @@ namespace TEABotTests.Twitch
         public void TTwEmotes_Construct_Badges()
         {
             TTwMessageTags parsedTags = new(
-                new()
+                new Dictionary<string, string>()
                 {
                     { "badges", "broadcaster/1,subscriber/0,premium/1" }
                 },
@@ -43,7 +44,7 @@ namespace TEABotTests.Twitch
         public void TTwEmotes_Construct_UserColor()
         {
             TTwMessageTags parsedTags = new(
-                new()
+                new Dictionary<string, string>()
                 {
                     { "color", "#9C15B5" }
                 },
@@ -66,7 +67,7 @@ namespace TEABotTests.Twitch
         public void TTwEmotes_Construct_DisplayName()
         {
             TTwMessageTags parsedTags = new(
-                new()
+                new Dictionary<string, string>()
                 {
                     { "display-name", "MarcMarkusMafaldaBjorn" }
                 },
@@ -86,7 +87,7 @@ namespace TEABotTests.Twitch
         public void TTwEmotes_Construct_Emotes()
         {
             TTwMessageTags parsedTags = new(
-                new()
+                new Dictionary<string, string>()
                 {
                     { "emotes", "306981865:11-22,24-35,49-60/emotesv2_b7c104b7df764573b503257a8965631f:37-47,62-72/307070118:0-9" }
                 },
@@ -113,9 +114,9 @@ namespace TEABotTests.Twitch
         public void TTwEmotes_Construct_MessageId()
         {
             TTwMessageTags parsedTags = new(
-                new()
+                new Dictionary<string, string>()
                 {
-                    { "msg-id", "1234567890abcdef" }
+                    { "id", "1234567890abcdef" }
                 },
                 null);
 
@@ -133,7 +134,7 @@ namespace TEABotTests.Twitch
         public void TTwEmotes_Construct_UserId()
         {
             TTwMessageTags parsedTags = new(
-                new()
+                new Dictionary<string, string>()
                 {
                     { "user-id", "abcdef1234567890" }
                 },
@@ -153,7 +154,7 @@ namespace TEABotTests.Twitch
         public void TTwEmotes_Construct_Unknown()
         {
             TTwMessageTags parsedTags = new(
-                new()
+                new Dictionary<string, string>()
                 {
                     { "unknown-tag", "value we don't care about" }
                 },
@@ -171,7 +172,7 @@ namespace TEABotTests.Twitch
         public void TTwEmotes_Construct_Mixed()
         {
             TTwMessageTags parsedTags = new(
-                new()
+                new Dictionary<string, string>()
                 {
                     { "badges", "broadcaster/1,subscriber/0,premium/1" },
                     { "color", "#9C15B5" },
