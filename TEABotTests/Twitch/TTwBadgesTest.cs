@@ -28,6 +28,10 @@ namespace TEABotTests.Twitch
             Assert.AreEqual("moderator", badge.Name);
             Assert.AreEqual(1, badge.Version);
             Assert.AreEqual(0, badge.Info);
+
+            Assert.IsFalse(parsedBadges.IsBroadcaster);
+            Assert.IsTrue(parsedBadges.IsModerator);
+            Assert.IsTrue(parsedBadges.IsPrivileged);
         }
 
         [TestMethod]
@@ -43,6 +47,10 @@ namespace TEABotTests.Twitch
             Assert.AreEqual("subscriber", badge.Name);
             Assert.AreEqual(3, badge.Version);
             Assert.AreEqual(146, badge.Info);
+
+            Assert.IsFalse(parsedBadges.IsBroadcaster);
+            Assert.IsFalse(parsedBadges.IsModerator);
+            Assert.IsFalse(parsedBadges.IsPrivileged);
         }
 
         [TestMethod]
@@ -58,6 +66,10 @@ namespace TEABotTests.Twitch
             Assert.AreEqual("broadcaster", badge.Name);
             Assert.AreEqual(27, badge.Version);
             Assert.AreEqual(0, badge.Info);
+
+            Assert.IsTrue(parsedBadges.IsBroadcaster);
+            Assert.IsFalse(parsedBadges.IsModerator);
+            Assert.IsTrue(parsedBadges.IsPrivileged);
         }
 
         [TestMethod]
@@ -81,6 +93,10 @@ namespace TEABotTests.Twitch
             Assert.AreEqual("premium", badge.Name);
             Assert.AreEqual(1, badge.Version);
             Assert.AreEqual(0, badge.Info);
+
+            Assert.IsTrue(parsedBadges.IsBroadcaster);
+            Assert.IsFalse(parsedBadges.IsModerator);
+            Assert.IsTrue(parsedBadges.IsPrivileged);
         }
 
         [TestMethod]
@@ -104,6 +120,10 @@ namespace TEABotTests.Twitch
             Assert.AreEqual("premium", badge.Name);
             Assert.AreEqual(28, badge.Version);
             Assert.AreEqual(0, badge.Info);
+
+            Assert.IsTrue(parsedBadges.IsBroadcaster);
+            Assert.IsFalse(parsedBadges.IsModerator);
+            Assert.IsTrue(parsedBadges.IsPrivileged);
         }
 
         [TestMethod]
@@ -127,6 +147,10 @@ namespace TEABotTests.Twitch
             Assert.AreEqual("premium", badge.Name);
             Assert.AreEqual(7, badge.Version);
             Assert.AreEqual(0, badge.Info);
+
+            Assert.IsTrue(parsedBadges.IsBroadcaster);
+            Assert.IsTrue(parsedBadges.IsModerator);
+            Assert.IsTrue(parsedBadges.IsPrivileged);
         }
 
         [TestMethod]
@@ -154,6 +178,10 @@ namespace TEABotTests.Twitch
             Assert.AreEqual("bot", badge.Name);
             Assert.AreEqual(12, badge.Version);
             Assert.AreEqual(9, badge.Info);
+
+            Assert.IsTrue(parsedBadges.IsBroadcaster);
+            Assert.IsFalse(parsedBadges.IsModerator);
+            Assert.IsTrue(parsedBadges.IsPrivileged);
         }
 
     }

@@ -73,6 +73,57 @@ namespace TEABot.Twitch
         public IReadOnlyList<Badge> Badges { get { return mBadges; } }
         private readonly List<Badge> mBadges = new();
 
+        #region Known badge names
+
+        public static readonly string BADGE_NAME_ADMIN = "admin";
+        public static readonly string BADGE_NAME_BITS = "bits";
+        public static readonly string BADGE_NAME_BROADCASTER = "broadcaster";
+        public static readonly string BADGE_NAME_GLOBAL_MOD = "global_mod";
+        public static readonly string BADGE_NAME_MODERATOR = "moderator";
+        public static readonly string BADGE_NAME_SUBSCRIBER = "subscriber";
+        public static readonly string BADGE_NAME_STAFF = "staff";
+        public static readonly string BADGE_NAME_TURBO = "turbo";
+        public static readonly string BADGE_NAME_PREMIUM = "premium";
+
+        #endregion
+
+        #region Properties
+
+        /// <summary>
+        /// True if the user has a broadcaster badge
+        /// </summary>
+        public bool IsBroadcaster
+        {
+            get
+            {
+                return mBadges.Any(b => b.Name.Equals(BADGE_NAME_BROADCASTER, StringComparison.InvariantCultureIgnoreCase));
+            }
+        }
+
+        /// <summary>
+        /// True if the user has a moderator badge
+        /// </summary>
+        public bool IsModerator
+        {
+            get
+            {
+                return mBadges.Any(b => b.Name.Equals(BADGE_NAME_MODERATOR, StringComparison.InvariantCultureIgnoreCase));
+            }
+        }
+
+        /// <summary>
+        /// True if the user has a badge marking them as a privileged user
+        /// </summary>
+        public bool IsPrivileged
+        {
+            get
+            {
+                return IsBroadcaster || IsModerator;
+            }
+        }
+
+        #endregion
+
         #endregion
 
         #region Internal data
