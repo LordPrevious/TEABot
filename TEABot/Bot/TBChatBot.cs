@@ -141,17 +141,6 @@ namespace TEABot.Bot
         {
             OnChatMessage?.Invoke(a_channel, TBMessageDirection.RECEIVED, a_sender, a_message);
 
-            // update list of chatters
-            lock (mLists.Users)
-            {
-                // add to encountered users
-                mLists.Users.Add(new()
-                {
-                    { "channel", a_channel.Name },
-                    { "name", a_sender }
-                });
-            }
-
             // parse twitch tags
             TTwMessageTags twitchTags = null;
             if ((Global.Configuration.TwitchCaps)
@@ -159,6 +148,9 @@ namespace TEABot.Bot
             {
                 twitchTags = new(a_tags, a_message);
             }
+
+            // update list of chatters
+            AddChatterToList(a_channel.Name, a_sender, twitchTags?.DisplayName ?? a_sender);
 
             HandleCommandMessage(a_channel, a_message, a_sender, twitchTags);
             HandlePatternMessage(a_channel, a_channel, a_message, a_sender, twitchTags);
@@ -668,6 +660,35 @@ namespace TEABot.Bot
             if (a_channel != Global)
             {
                 HandlePatternMessage(Global, a_executionChannel, a_message, a_sender, a_twitchTags);
+            }
+        }
+
+        /// <summary>
+        /// Add a chatter to the list of chat users;
+        /// perform list cut-off as required.
+        /// </summary>
+        /// <param name="a_channel">The channel the user chatted on</param>
+        /// <param name="a_nick">The user's IRC nick</param>
+        /// <param name="a_chatter">The user's display name</param>
+        private void AddChatterToList(string a_channel, string a_nick, string a_chatter)
+        {
+            lock (mLists.Users)
+            {
+                // add to encountered users
+                mLists.Users.Add(new()
+                {
+                    { "channel", a_channel },
+                    { "user", a_nick },
+                    { "name", a_chatter },
+                    { "timestamp", DateTime.Now.ToString(Global.Configuration.TimestampFormat) }
+                });
+                // check if list is getting too long
+                if ((mLists.Users.Count > Global.Configuration.MaxLogSize)
+                    && (Global.Configuration.LogCutoffSize < mLists.Users.Count))
+                {
+                    // reduce list to a smaller size
+                    mLists.Users.RemoveRange(0, mLists.Users.Count - (int)Global.Configuration.LogCutoffSize);
+                }
             }
         }
 
