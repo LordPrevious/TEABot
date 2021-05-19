@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -431,7 +429,7 @@ namespace TEABot.Bot
         /// <summary>
         /// List provider
         /// </summary>
-        private TBListProvider mLists = new();
+        private readonly TBListProvider mLists = new();
 
         #endregion
 
