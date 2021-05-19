@@ -19,7 +19,7 @@ namespace TEABot.Twitch
         /// initialize from a list of badges
         /// </summary>
         /// <param name="a_badges">The badges</param>
-        public TTwBadges(IReadOnlyCollection<Badge> a_badges)
+        public TTwBadges(IEnumerable<Badge> a_badges)
         {
             mBadges.AddRange(a_badges);
         }
