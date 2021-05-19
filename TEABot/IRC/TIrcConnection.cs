@@ -174,8 +174,9 @@ namespace TEABot.IRC
                         if ((message.Params != null) && (message.Params.Middles.Count >= 1))
                         {
                             RaiseMessage(IrcDirection.ServerToClient, message.Params.Middles[0],
-                                message.Prefix,
-                                String.Join(" ", message.Params.Middles.Skip(1).Append(message.Params.Trailing)));
+                                message.Nickname,
+                                message.Text,
+                                message.Tags?.Tags);
                         }
                         break;
                     case TIrcCommand.NOTICE:
@@ -183,8 +184,8 @@ namespace TEABot.IRC
                         if ((message.Params != null) && (message.Params.Middles.Count >= 1))
                         {
                             RaiseNotice(IrcDirection.ServerToClient, message.Params.Middles[0],
-                                message.Prefix,
-                                String.Join(" ", message.Params.Middles.Skip(1).Append(message.Params.Trailing)));
+                                message.Nickname,
+                                message.Text);
                         }
                         break;
                     case TIrcCommand.ERROR:
@@ -239,8 +240,9 @@ namespace TEABot.IRC
                         if ((a_message.Params != null) && (a_message.Params.Middles.Count >= 1))
                         {
                             RaiseMessage(IrcDirection.ClientToServer, a_message.Params.Middles[0],
-                                a_message.Prefix,
-                                String.Join(" ", a_message.Params.Middles.Skip(1).Append(a_message.Params.Trailing)));
+                                a_message.Nickname,
+                                a_message.Text,
+                                a_message.Tags?.Tags);
                         }
                         break;
                     // notice message sent to the server
@@ -248,8 +250,8 @@ namespace TEABot.IRC
                         if ((a_message.Params != null) && (a_message.Params.Middles.Count >= 1))
                         {
                             RaiseNotice(IrcDirection.ClientToServer, a_message.Params.Middles[0],
-                                a_message.Prefix,
-                                String.Join(" ", a_message.Params.Middles.Skip(1).Append(a_message.Params.Trailing)));
+                                a_message.Nickname,
+                                a_message.Text);
                         }
                         break;
                     // PING sent to the server for connection keep-alive
@@ -627,8 +629,9 @@ namespace TEABot.IRC
         /// <param name="a_channel">Name of associated channel</param>
         /// <param name="a_nickname">Nickname of sender</param>
         /// <param name="a_message">Message text</param>
+        /// <param name="a_tags">Message tags, may be null</param>
         public delegate void MessageHandler(object a_sender, IrcDirection a_direction, string a_channel,
-            TIrcMessage.MessagePrefix a_nickname, string a_message);
+            string a_nickname, string a_message, IReadOnlyDictionary<string, string> a_tags);
         /// <summary>
         /// Event raised for regular chat messages, both sent and received
         /// </summary>
@@ -640,9 +643,10 @@ namespace TEABot.IRC
         /// <param name="a_channel">Name of associated channel</param>
         /// <param name="a_nickname">Nickname of sender</param>
         /// <param name="a_message">Message text</param>
-        private void RaiseMessage(IrcDirection a_direction, string a_channel, TIrcMessage.MessagePrefix a_nickname, string a_message)
+        /// <param name="a_tags">Message tags, may be null</param>
+        private void RaiseMessage(IrcDirection a_direction, string a_channel, string a_nickname, string a_message, IReadOnlyDictionary<string, string> a_tags)
         {
-            OnMessage?.Invoke(this, a_direction, a_channel, a_nickname, a_message);
+            OnMessage?.Invoke(this, a_direction, a_channel, a_nickname, a_message, a_tags);
         }
         /// <summary>
         /// Event raised for notice messages, both sent and received
@@ -655,9 +659,9 @@ namespace TEABot.IRC
         /// <param name="a_channel">Name of associated channel</param>
         /// <param name="a_nickname">Nickname of sender</param>
         /// <param name="a_message">Message text</param>
-        private void RaiseNotice(IrcDirection a_direction, string a_channel, TIrcMessage.MessagePrefix a_nickname, string a_message)
+        private void RaiseNotice(IrcDirection a_direction, string a_channel, string a_nickname, string a_message)
         {
-            OnNotice?.Invoke(this, a_direction, a_channel, a_nickname, a_message);
+            OnNotice?.Invoke(this, a_direction, a_channel, a_nickname, a_message, null);
         }
 
         /// <summary>

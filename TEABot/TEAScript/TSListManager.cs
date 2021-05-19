@@ -305,6 +305,99 @@ namespace TEABot.TEAScript
         }
 
         /// <summary>
+        /// Limit the list size, creating a new list with at most a_maxSize items from the end of the original list.
+        /// Modifying the new list will not affect the original list.
+        /// </summary>
+        /// <param name="a_maxSize">The maximal number of items to keep.</param>
+        /// <returns>True iff the list has been reduced.</returns>
+        public bool LimitListSize(long a_maxSize)
+        {
+            if (!VerifyListOpen(nameof(RemoveListItem))) return false;
+            lock (mCurrentList)
+            {
+                // remember original list
+                var originalList = mCurrentList;
+                // create new list
+                mCurrentList = new();
+                // add tail from original list
+                mCurrentList.AddRange(originalList.TakeLast((int)a_maxSize));
+                // update context status
+                SetCurrentListStatus();
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Randomize the order of list items, creating a new list with the original items in a random order.
+        /// Modifying the new list will not affect the original list.
+        /// </summary>
+        /// <returns>True iff the list has been shuffled.</returns>
+        public bool ShuffleListItems()
+        {
+            if (!VerifyListOpen(nameof(RemoveListItem))) return false;
+            lock (mCurrentList)
+            {
+                // remember original list
+                var originalList = mCurrentList;
+                // create new list
+                mCurrentList = new();
+                // add random items from the original list by ordering via random value
+                mCurrentList.AddRange(originalList.OrderBy(i => sRandomizer.Next()));
+                // update context status
+                SetCurrentListStatus();
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Sort the list items, creating a new list with the original items with the given key in ascending order.
+        /// Modifying the new list will not affect the original list.
+        /// </summary>
+        /// <param name="a_key">The key to order by.</param>
+        /// <returns>True iff the list has been ordered.</returns>
+        public bool SortListItems(string a_key)
+        {
+            if (!VerifyListOpen(nameof(RemoveListItem))) return false;
+            lock (mCurrentList)
+            {
+                // remember original list
+                var originalList = mCurrentList;
+                // create new list
+                mCurrentList = new();
+                // add ordered items from the original list
+                if (originalList.Count > 1)
+                {
+                    // check first item to see if we sort by number or string
+                    if (originalList[0].TryGetValue(a_key, out TSValue firstValue)
+                        && firstValue.IsText)
+                    {
+                        // order as text
+                        mCurrentList.AddRange(originalList.OrderBy(i =>
+                            i.TryGetValue(a_key, out TSValue itemValue)
+                                ? itemValue.TextValue
+                                : String.Empty));
+                    }
+                    else
+                    {
+                        // order as numbers
+                        mCurrentList.AddRange(originalList.OrderBy(i =>
+                            i.TryGetValue(a_key, out TSValue itemValue)
+                                ? itemValue.NumericalValue
+                                : long.MinValue));
+                    }
+                }
+                else
+                {
+                    // nothing to sort
+                    mCurrentList.AddRange(originalList);
+                }
+                // update context status
+                SetCurrentListStatus();
+                return true;
+            }
+        }
+
+        /// <summary>
         /// Load a named list.
         /// Named lists may refer to special internal lists from the list provider,
         /// or additional lists this manager is aware of. These lists should use the

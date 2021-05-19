@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using TEABot.IRC;
 using TEABot.TEAScript;
+using TEABot.Twitch;
 using TEABot.WebSocket;
 
 namespace TEABot.Bot
@@ -137,22 +136,24 @@ namespace TEABot.Bot
         /// <param name="a_channel">The channel the message was received on</param>
         /// <param name="a_message">The received message</param>
         /// <param name="a_sender">The message sender's username</param>
-        public void HandleReceivedMessage(TBChannel a_channel, string a_message, string a_sender)
+        /// <param name="a_tags">Optional message tags, may be null</param>
+        public void HandleReceivedMessage(TBChannel a_channel, string a_message, string a_sender, IReadOnlyDictionary<string, string> a_tags)
         {
             OnChatMessage?.Invoke(a_channel, TBMessageDirection.RECEIVED, a_sender, a_message);
 
-            lock (mLists.Users)
+            // parse twitch tags
+            TTwMessageTags twitchTags = null;
+            if ((Global.Configuration.TwitchCaps)
+                && (a_tags != null))
             {
-                // add to encountered users
-                mLists.Users.Add(new()
-                {
-                    { "channel", a_channel.Name },
-                    { "name", a_sender }
-                });
+                twitchTags = new(a_tags, a_message);
             }
 
-            HandleCommandMessage(a_channel, a_message, a_sender);
-            HandlePatternMessage(a_channel, a_channel, a_message, a_sender);
+            // update list of chatters
+            AddChatterToList(a_channel.Name, a_sender, twitchTags?.DisplayName ?? a_sender);
+
+            HandleCommandMessage(a_channel, a_message, a_sender, twitchTags);
+            HandlePatternMessage(a_channel, a_channel, a_message, a_sender, twitchTags);
         }
 
         /// <summary>
@@ -431,7 +432,7 @@ namespace TEABot.Bot
         /// <summary>
         /// List provider
         /// </summary>
-        private TBListProvider mLists = new();
+        private readonly TBListProvider mLists = new();
 
         #endregion
 
@@ -603,7 +604,8 @@ namespace TEABot.Bot
         /// <param name="a_channel">The channel with scripts to execute</param>
         /// <param name="a_message">The received message</param>
         /// <param name="a_sender">The message sender's username</param>
-        private void HandleCommandMessage(TBChannel a_channel, string a_message, string a_sender)
+        /// <param name="a_twitchTags">Optional twitch tags, may be null</param>
+        private void HandleCommandMessage(TBChannel a_channel, string a_message, string a_sender, TTwMessageTags a_twitchTags)
         {
             if (!(a_message.StartsWith(a_channel.Configuration.Prefix))) return;
 
@@ -631,7 +633,7 @@ namespace TEABot.Bot
             if (a_channel.TriggeredScripts.TryGetValue(command, out TSCompiledScript script)
                 || ((a_channel != Global) && Global.TriggeredScripts.TryGetValue(command, out script)))
             {
-                ExecuteScript(a_channel, script, a_sender, arguments);
+                ExecuteScript(a_channel, script, a_sender, arguments, a_twitchTags);
             }
         }
 
@@ -642,7 +644,8 @@ namespace TEABot.Bot
         /// <param name="a_executionChannel">The channel on which to execute the script</param>
         /// <param name="a_message">The received message</param>
         /// <param name="a_sender">The message sender's username</param>
-        private void HandlePatternMessage(TBChannel a_channel, TBChannel a_executionChannel, string a_message, string a_sender)
+        /// <param name="a_twitchTags">Optional twitch tags, may be null</param>
+        private void HandlePatternMessage(TBChannel a_channel, TBChannel a_executionChannel, string a_message, string a_sender, TTwMessageTags a_twitchTags)
         {
             // check for regex pattern triggers
             foreach (var regexScript in a_channel.RegexScripts)
@@ -650,13 +653,42 @@ namespace TEABot.Bot
                 if (regexScript.Key.IsMatch(a_message))
                 {
                     // execute script
-                    ExecuteScript(a_executionChannel, regexScript.Value, a_sender, String.Empty);
+                    ExecuteScript(a_executionChannel, regexScript.Value, a_sender, String.Empty, a_twitchTags);
                 }
             }
             // check global context as well
             if (a_channel != Global)
             {
-                HandlePatternMessage(Global, a_executionChannel, a_message, a_sender);
+                HandlePatternMessage(Global, a_executionChannel, a_message, a_sender, a_twitchTags);
+            }
+        }
+
+        /// <summary>
+        /// Add a chatter to the list of chat users;
+        /// perform list cut-off as required.
+        /// </summary>
+        /// <param name="a_channel">The channel the user chatted on</param>
+        /// <param name="a_nick">The user's IRC nick</param>
+        /// <param name="a_chatter">The user's display name</param>
+        private void AddChatterToList(string a_channel, string a_nick, string a_chatter)
+        {
+            lock (mLists.Users)
+            {
+                // add to encountered users
+                mLists.Users.Add(new()
+                {
+                    { "channel", a_channel },
+                    { "user", a_nick },
+                    { "name", a_chatter },
+                    { "timestamp", DateTime.Now.ToString(Global.Configuration.TimestampFormat) }
+                });
+                // check if list is getting too long
+                if ((mLists.Users.Count > Global.Configuration.MaxLogSize)
+                    && (Global.Configuration.LogCutoffSize < mLists.Users.Count))
+                {
+                    // reduce list to a smaller size
+                    mLists.Users.RemoveRange(0, mLists.Users.Count - (int)Global.Configuration.LogCutoffSize);
+                }
             }
         }
 
@@ -667,9 +699,10 @@ namespace TEABot.Bot
         /// <param name="a_script">The script to execute</param>
         /// <param name="a_sender">The original message sender</param>
         /// <param name="a_arguments">Any script arguments</param>
-        private void ExecuteScript(TBChannel a_channel, TSCompiledScript a_script, string a_sender, string a_arguments)
+        /// <param name="a_twitchTags">Optional twitch tags, may be null</param>
+        private void ExecuteScript(TBChannel a_channel, TSCompiledScript a_script, string a_sender, string a_arguments, TTwMessageTags a_twitchTags)
         {
-            var executor = new TBTaskedExecutor(mStorage, mHurler, mLists, a_channel, a_script, a_arguments, a_sender, mCTSource.Token);
+            var executor = new TBTaskedExecutor(mStorage, mHurler, mLists, a_twitchTags, a_channel, a_script, a_arguments, a_sender, mCTSource.Token);
             if (executor.InitializeContext())
             {
                 executor.Broadcaster.Context = a_channel;
@@ -700,7 +733,7 @@ namespace TEABot.Bot
         {
             if (a_script.Interval > 0)
             {
-                var executor = new TBTaskedExecutor(mStorage, mHurler, mLists, a_channel, a_script, String.Empty, String.Empty, mCTSource.Token);
+                var executor = new TBTaskedExecutor(mStorage, mHurler, mLists, null, a_channel, a_script, String.Empty, String.Empty, mCTSource.Token);
                 if (executor.InitializeContext())
                 {
                     executor.Broadcaster.Context = a_channel;
@@ -937,44 +970,34 @@ namespace TEABot.Bot
             }
         }
 
-        void Connection_OnMessage(object sender, TIrcConnection.IrcDirection direction, string channel, TIrcMessage.MessagePrefix nickname, string message)
+        void Connection_OnMessage(object sender, TIrcConnection.IrcDirection a_direction, string a_channel,
+            string a_nickname, string a_message, IReadOnlyDictionary<string, string> a_tags)
         {
-            if (direction == TIrcConnection.IrcDirection.ServerToClient)
+            if (a_direction == TIrcConnection.IrcDirection.ServerToClient)
             {
-                var nick = String.Empty;
-                if (nickname != null)
+                if (Channels.TryGetValue(a_channel[1..], out TBChannel context))
                 {
-                    nick = nickname.IsNick ? nickname.NickName : nickname.ToString();
-                }
-
-                if (Channels.TryGetValue(channel[1..], out TBChannel context))
-                {
-                    HandleReceivedMessage(context, message, nick);
+                    HandleReceivedMessage(context, a_message, a_nickname, a_tags);
                 }
                 else
                 {
-                    OnWarning.Invoke(Global, String.Format("Received message for unknown channel {0} from {1}: {2}", channel, nick, message));
+                    OnWarning.Invoke(Global, String.Format("Received message for unknown channel {0} from {1}: {2}", a_channel, a_nickname, a_message));
                 }
             }
         }
 
-        void Connection_OnNotice(object sender, TIrcConnection.IrcDirection direction, string channel, TIrcMessage.MessagePrefix nickname, string message)
+        void Connection_OnNotice(object sender, TIrcConnection.IrcDirection a_direction, string a_channel,
+            string a_nickname, string a_message, IReadOnlyDictionary<string, string> a_tags)
         {
-            if (direction == TIrcConnection.IrcDirection.ServerToClient)
+            if (a_direction == TIrcConnection.IrcDirection.ServerToClient)
             {
-                var nick = String.Empty;
-                if (nickname != null)
+                if (Channels.TryGetValue(a_channel[1..], out TBChannel context))
                 {
-                    nick = nickname.IsNick ? nickname.NickName : nickname.ToString();
-                }
-
-                if (Channels.TryGetValue(channel[1..], out TBChannel context))
-                {
-                    OnNotice?.Invoke(context, String.Format("NOTICE: {0}: {1}", nick, message));
+                    OnNotice?.Invoke(context, String.Format("NOTICE: {0}: {1}", a_nickname, a_message));
                 }
                 else
                 {
-                    OnWarning.Invoke(Global, String.Format("Received notice for unknown channel {0} from {1}: {2}", channel, nick, message));
+                    OnWarning.Invoke(Global, String.Format("Received notice for unknown channel {0} from {1}: {2}", a_channel, a_nickname, a_message));
                 }
             }
         }
