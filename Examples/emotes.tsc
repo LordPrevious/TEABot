@@ -10,7 +10,6 @@ command emotes
 
 list:load #emotes
 list:first !emote.*
-jump @printEmote 1
 @printEmote
 jump @endEmoteList $list.outOfBounds
 print !emote.name
