@@ -1,0 +1,25 @@
+script Emote bounce-back
+description Repeats the emotes the user sent
+command emotes
+
+##################################################
+# Requires Twitch Capabilities to be enabled.
+# You need this line in your global config.tss:
+# twitchCaps=ON
+##################################################
+
+list:load #emotes
+list:first !emote.*
+jump @printEmote 1
+@printEmote
+jump @endEmoteList $list.outOfBounds
+print !emote.name
+write  
+list:next !emote.*
+jump @printEmote 1
+
+@endEmoteList
+write — 
+print $sender.displayName
+flush
+end
