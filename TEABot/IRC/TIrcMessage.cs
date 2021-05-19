@@ -82,6 +82,17 @@ namespace TEABot.IRC
         public MessagePrefix Prefix { get; private set; }
         // prefix     =  servername / ( nickname [ [ "!" user ] "@" host ] )
 
+        /// <summary>
+        /// Nickname extracted from the prefix, if any
+        /// </summary>
+        public string Nickname { get
+            {
+                return (Prefix != null)
+                    ? (Prefix.IsNick ? Prefix.NickName : Prefix.ToString())
+                    : String.Empty;
+            }
+        }
+
         public MessageCommand Command { get; private set; }
         // command    =  1*letter / 3digit
         // At least one letter or exactly three digits
@@ -99,6 +110,19 @@ namespace TEABot.IRC
          * trailing   =  *( ":" / " " / nospcrlfcl )
          *      that is, any number of (colon, space or (not null or CR or LF))
          */
+
+        /// <summary>
+        /// Message text comnbined from the Params
+        /// </summary>
+        public string Text
+        {
+            get
+            {
+                return (Params != null)
+                    ? String.Join(" ", Params.Middles.Skip(1).Append(Params.Trailing))
+                    : String.Empty;
+            }
+        }
 
         #endregion
 
