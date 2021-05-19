@@ -11,7 +11,7 @@ namespace TEABot.Twitch
     /// An emote has an ID which is required to find its image on Twitch
     /// and a name by which it is embedded in a message.
     /// </summary>
-    class TTwEmotes
+    public class TTwEmotes
     {
         #region Constructors
 
