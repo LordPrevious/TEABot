@@ -106,8 +106,8 @@ namespace TEABotTests.Twitch
             var emote = parsedTags.Emotes.Emotes[0];
             Assert.AreEqual("306981865", emote.Id);
             Assert.AreEqual("lordpr2Hello", emote.Name);
-            Assert.AreEqual(11, emote.Position.Start);
-            Assert.AreEqual(22, emote.Position.End);
+            Assert.AreEqual(11, emote.Start);
+            Assert.AreEqual(22, emote.End);
         }
 
         [TestMethod]

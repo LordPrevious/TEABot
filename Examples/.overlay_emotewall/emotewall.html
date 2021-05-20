@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<title>TEABot Emote Wall Overlay</title>
+		<link rel="stylesheet" type="text/css" href="emotewall.css">
+		<script type="text/javascript" src="emotewall.js"></script>
+	</head>
+	<body onload="javascript:init();">
+		<div id="noConnection" onclick="javascript:test();">
+			<h1>Emote Wall</h1>
+			No connection to WebSocket server.
+			<div id="targetHost"></div>
+		</div>
+	</body>
+</html>

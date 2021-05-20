@@ -90,6 +90,9 @@ namespace TEABot.TEAScript
             {
                 ++lineCount;
 
+                // skip leading whitespace
+                line = line.TrimStart();
+
                 // skip empty lines and comments
                 if ((line.Length == 0)
                     || (line[0] == COMMENT_INDICATOR))

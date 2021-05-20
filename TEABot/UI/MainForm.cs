@@ -349,14 +349,15 @@ namespace TEABot.UI
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // cancel tasks and disconnect bot
-            mChatBot.Disconnect();
             // detach chatbot events
             mChatBot.OnChatMessage -= MChatBot_OnChatMessage;
             mChatBot.OnInfo -= MChatBot_OnInfo;
             mChatBot.OnNotice -= MChatBot_OnNotice;
             mChatBot.OnWarning -= MChatBot_OnWarning;
             mChatBot.OnError -= MChatBot_OnError;
+            mChatBot.OnConnectionStatusChanged -= MChatBot_OnConnectionStatusChanged;
+            // cancel tasks and disconnect bot
+            mChatBot.Disconnect();
         }
 
         private void TsmiIrcConnect_Click(object sender, EventArgs e)

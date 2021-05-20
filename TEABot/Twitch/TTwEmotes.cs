@@ -70,7 +70,7 @@ namespace TEABot.Twitch
                             }
 
                             // add to emote list
-                            mEmotes.Add(new Emote(emoteId, emoteName, new Range(rangeStart, rangeEnd)));
+                            mEmotes.Add(new Emote(emoteId, emoteName, rangeStart, rangeEnd));
                         }
                     }
                 }
@@ -115,21 +115,27 @@ namespace TEABot.Twitch
             /// </summary>
             public readonly string Name;
             /// <summary>
-            /// Position of the emote occurrence within the chat message
+            /// Position of the first character of the emote occurrence within the chat message
             /// </summary>
-            public readonly Range Position;
+            public readonly int Start;
+            /// <summary>
+            /// Position of the last character of the emote occurrence within the chat message
+            /// </summary>
+            public readonly int End;
 
             /// <summary>
             /// Initialize an emote struct
             /// </summary>
-            /// <param name="a_name">Badge name</param>
-            /// <param name="a_version">Version</param>
-            /// <param name="a_info">Info</param>
-            public Emote(string a_id, string a_name, Range a_position)
+            /// <param name="a_id">Emote ID</param>
+            /// <param name="a_name">Emote name</param>
+            /// <param name="a_start">Position of the first character in the chat message</param>
+            /// <param name="a_end">Position of the last character in the chat message</param>
+            public Emote(string a_id, string a_name, int a_start, int a_end)
             {
                 Id = a_id ?? throw new ArgumentNullException(nameof(a_id));
                 Name = a_name ?? throw new ArgumentNullException(nameof(a_name)); ;
-                Position = a_position;
+                Start = a_start;
+                End = a_end;
             }
         }
 

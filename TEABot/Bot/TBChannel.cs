@@ -40,7 +40,7 @@ namespace TEABot.Bot
         /// <summary>
         /// Map from trigger command to script
         /// </summary>
-        public Dictionary<string, TSCompiledScript> TriggeredScripts = new();
+        public Dictionary<string, TSCompiledScript> CommandScripts = new();
 
         /// <summary>
         /// Map from trigger regex to script
@@ -51,6 +51,11 @@ namespace TEABot.Bot
         /// Periodically executed scripts
         /// </summary>
         public List<TSCompiledScript> PeriodicScripts = new();
+
+        /// <summary>
+        /// Scripts to execute on received twitch emotes
+        /// </summary>
+        public List<TSCompiledScript> TwitchEmoteScripts = new();
 
         /// <summary>
         /// Whether the channel has been joined and can be sent to or not

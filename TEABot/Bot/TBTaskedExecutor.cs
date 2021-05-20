@@ -169,15 +169,15 @@ namespace TEABot.Bot
                 {
                     // list of emotes sorted by occurrence in original message
                     TSValueList emoteList = new();
-                    var sortedEmotes = mTwitchTags.Emotes.Emotes.OrderBy(e => e.Position.Start.Value).ToList();
+                    var sortedEmotes = mTwitchTags.Emotes.Emotes.OrderBy(e => e.Start).ToList();
                     foreach (var emote in sortedEmotes)
                     {
                         emoteList.Add(new()
                         {
                             { "id", emote.Id },
                             { "name", emote.Name },
-                            { "start", emote.Position.Start.Value },
-                            { "end", emote.Position.End.Value }
+                            { "start", emote.Start },
+                            { "end", emote.End }
                         });
                     }
                     a_context.Lists.AddAdditionalList(cListNameEmotes, emoteList);
