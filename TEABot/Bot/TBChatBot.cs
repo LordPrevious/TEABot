@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -90,7 +91,7 @@ namespace TEABot.Bot
         public void ReloadScripts(string a_rootDirectory)
         {
             // remove old global scripts
-            Global.TriggeredScripts.Clear();
+            Global.CommandScripts.Clear();
             Global.RegexScripts.Clear();
             Global.PeriodicScripts.Clear();
 
@@ -102,7 +103,7 @@ namespace TEABot.Bot
                 (la_channel, la_directory) =>
                 {
                     // remove old channel scripts
-                    la_channel.TriggeredScripts.Clear();
+                    la_channel.CommandScripts.Clear();
                     la_channel.RegexScripts.Clear();
                     la_channel.PeriodicScripts.Clear();
                     // load channel scripts
@@ -154,6 +155,7 @@ namespace TEABot.Bot
 
             HandleCommandMessage(a_channel, a_message, a_sender, twitchTags);
             HandlePatternMessage(a_channel, a_channel, a_message, a_sender, twitchTags);
+            HandleTwitchEmoteMessage(a_channel, a_message, a_sender, twitchTags);
         }
 
         /// <summary>
@@ -542,7 +544,7 @@ namespace TEABot.Bot
                     if (null != script)
                     {
                         // add trigger commands
-                        script.Commands.ForEach(c => a_channel.TriggeredScripts[c] = script);
+                        script.Commands.ForEach(c => a_channel.CommandScripts[c] = script);
                         // add regex patterns
                         if (!String.IsNullOrEmpty(script.RegexPattern))
                         {
@@ -554,6 +556,11 @@ namespace TEABot.Bot
                         if (script.Interval > 0)
                         {
                             a_channel.PeriodicScripts.Add(script);
+                        }
+                        // add to special trigger lists
+                        if (script.TwitchEmotes)
+                        {
+                            a_channel.TwitchEmoteScripts.Add(script);
                         }
                     }
                 }
@@ -630,8 +637,8 @@ namespace TEABot.Bot
 
             // check if any script is triggered by this command
             command = command.ToLowerInvariant();
-            if (a_channel.TriggeredScripts.TryGetValue(command, out TSCompiledScript script)
-                || ((a_channel != Global) && Global.TriggeredScripts.TryGetValue(command, out script)))
+            if (a_channel.CommandScripts.TryGetValue(command, out TSCompiledScript script)
+                || ((a_channel != Global) && Global.CommandScripts.TryGetValue(command, out script)))
             {
                 ExecuteScript(a_channel, script, a_sender, arguments, a_twitchTags);
             }
@@ -660,6 +667,55 @@ namespace TEABot.Bot
             if (a_channel != Global)
             {
                 HandlePatternMessage(Global, a_executionChannel, a_message, a_sender, a_twitchTags);
+            }
+        }
+
+        /// <summary>
+        /// Handle a received message, executing any scripts the message should trigger via twitch emotes
+        /// </summary>
+        /// <param name="a_channel">The channel with scripts to execute</param>
+        /// <param name="a_message">The received message</param>
+        /// <param name="a_sender">The message sender's username</param>
+        /// <param name="a_twitchTags">Optional twitch tags, may be null</param>
+        private void HandleTwitchEmoteMessage(TBChannel a_channel, string a_message, string a_sender, TTwMessageTags a_twitchTags)
+        {
+            // message must contain emotes to trigger
+            if ((a_twitchTags == null)
+                || (a_twitchTags.Emotes == null)
+                || (a_twitchTags.Emotes.Emotes == null)
+                || !(a_twitchTags.Emotes.Emotes.Any())
+                // skip further preparations if no emote trigger scripts are present
+                || (!a_channel.TwitchEmoteScripts.Any() && !Global.TwitchEmoteScripts.Any())) return;
+
+            // strip emotes from original message by replacing all occurrences with whitespace,
+            // so script parameter parsing will ignore them
+            var strippedMessage = new StringBuilder(a_message);
+            if (strippedMessage.Length > 0)
+            {
+                foreach (var emote in a_twitchTags.Emotes.Emotes)
+                {
+                    for (var index = Math.Max(emote.Start, 0);
+                        index < Math.Min(emote.End + 1, strippedMessage.Length);
+                        ++index)
+                    {
+                        strippedMessage[index] = ' ';
+                    }
+                }
+            }
+            var arguments = strippedMessage.ToString();
+
+            // execute channel emote scripts
+            foreach (var localEmoteScript in a_channel.TwitchEmoteScripts)
+            {
+                ExecuteScript(a_channel, localEmoteScript, a_sender, arguments, a_twitchTags);
+            }
+            // execute global channel emote scripts as well
+            if (a_channel != Global)
+            {
+                foreach (var globalEmoteScript in Global.TwitchEmoteScripts)
+                {
+                    ExecuteScript(a_channel, globalEmoteScript, a_sender, arguments, a_twitchTags);
+                }
             }
         }
 

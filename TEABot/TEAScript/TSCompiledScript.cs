@@ -38,6 +38,11 @@ namespace TEABot.TEAScript
         public long Interval { get; set; } = 0L;
 
         /// <summary>
+        /// True iff the script should be triggered on received twitch emotes
+        /// </summary>
+        public bool TwitchEmotes { get; set; } = false;
+
+        /// <summary>
         /// The script's parameter specifications
         /// </summary>
         public List<TSParameter> Parameters { get; } = new List<TSParameter>();
