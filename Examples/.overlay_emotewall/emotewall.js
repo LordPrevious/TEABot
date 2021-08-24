@@ -5,7 +5,7 @@
 // average emote size in pixels
 const gc_emoteBaseSizePx = 150;
 // max emote size deviation in pixels
-const gc_emoteSizeDeviationPx = 50;
+const gc_emoteSizeDeviationPx = 25;
 
 // interval between animation frame processing in milliseconds
 const gc_animationSpeed = 33; // ~ 30 FPS
@@ -21,6 +21,13 @@ const gc_webSocketConnectIntervalMs = 15000;
 
 // The web socket to communicate with the backend
 var g_webSocket = null;
+
+// Array of emote IDs for an emote train
+var g_trainCarts = [];
+// Number of carts to reach in g_trainCarts to get a train going
+var gc_trainThreshold = 10;
+// Chance of an emote to be added to g_trainCarts, 1 being 100%
+var gc_trainCartChance = 0.2;
 
 /* * * * * * * * * *
  * OBJECT PROTOTYPES
@@ -381,7 +388,7 @@ function animation_gonne(emoteInfo, elapsedTime) {
 	var fY = (emoteInfo.state.speedY == 0) ? 0
 		: -0.25 * volume * Math.pow(emoteInfo.state.speedY, 3) / Math.abs(emoteInfo.state.speedY);
 	// acceleration
-	var mass = emoteInfo.size / 1000;
+	var mass = emoteInfo.size / 50;
 	var aX = fX / mass;
 	var aY = (fY / mass) + 9.81;
 	// new velocity
@@ -396,8 +403,9 @@ function animation_gonne(emoteInfo, elapsedTime) {
 	emoteInfo.setElementPosition();
 	
 	// bounce off of left wall
-	if ((emoteInfo.left < 0) && (emoteInfo.state.speedX < 0)) {
-		emoteInfo.state.speedX *= -0.5;
+	if (((emoteInfo.left < 0) && (emoteInfo.state.speedX < 0))
+		|| ((emoteInfo.left > (document.body.clientWidth-emoteInfo.size)) && (emoteInfo.state.speedX > 0))) {
+		emoteInfo.state.speedX *= -0.25;
 	}
 	
 	// update transform
@@ -413,16 +421,18 @@ function animation_gonne(emoteInfo, elapsedTime) {
  */
 function start_gonne(emoteId) {
 	// randomize base offset and common speed
-	var baseTopOffset = (document.body.clientHeight/2) + ((Math.random()-0.5)*(document.body.clientHeight/5));
-	var commonSpeedFactor = (Math.random() * 2) + 1;
+	var baseTopOffset = (document.body.clientHeight/2) + ((Math.random()-0.5)*(document.body.clientHeight/4));
+	var leftToRight = Math.random() > 0.7;
+	var commonSpeedFactor = Math.random() + 3;
 	// randomize common initial direction
-	var direction = (Math.random() * Math.PI/8) - (Math.PI*7/8);
+	var direction = (Math.random() * Math.PI/12) - (Math.PI*23/24);
 	var commonSpeedX = Math.cos(direction) * commonSpeedFactor;
+	if (leftToRight) { commonSpeedX *= -1; }
 	var commonSpeedY = Math.sin(direction) * commonSpeedFactor;
 	// randomized delay between projectiles
-	var projectileInterval = (Math.random() * 200) + 100;
+	var projectileInterval = (Math.random() * 50) + 400;
 	// randomized projectile count
-	var projectileCount = Math.floor((Math.random() * 3)) + 3;
+	var projectileCount = Math.floor((Math.random() * 4)) + 6;
 	// start individual animations w/ delay
 	var gonneAnimationStart = function() {
 		start_animation_common(emoteId,
@@ -437,11 +447,11 @@ function start_gonne(emoteId) {
 				};
 				// set common start position
 				emoteInfo.top = baseTopOffset;
-				emoteInfo.left = document.body.clientWidth;
+				emoteInfo.left = leftToRight ? -gc_emoteBaseSizePx : document.body.clientWidth;
 				emoteInfo.setElementPosition();
 			},
 			animation_gonne,
-			0.4);
+			0.5);
 		};
 	for (var i = 0; i < projectileCount; ++i)
 	{
@@ -468,7 +478,7 @@ function animation_spring(emoteInfo, elapsedTime) {
 	var fY = (emoteInfo.state.speedY == 0) ? 0
 		: -0.25 * volume * Math.pow(emoteInfo.state.speedY, 3) / Math.abs(emoteInfo.state.speedY);
 	// acceleration
-	var mass = emoteInfo.size / 1000;
+	var mass = emoteInfo.size / 500;
 	var aX = fX / mass;
 	var aY = (fY / mass) + 9.81;
 	// new velocity
@@ -481,7 +491,7 @@ function animation_spring(emoteInfo, elapsedTime) {
 	emoteInfo.setElementPosition();
 	
 	// update rotation
-	var rotationSpeed = Math.atan2(emoteInfo.state.speedX, emoteInfo.state.speedY);
+	var rotationSpeed = Math.atan2(emoteInfo.state.speedX, emoteInfo.state.speedY) * 0.4;
 	emoteInfo.state.rotationDeg = ((360 + (emoteInfo.state.rotationDeg + (elapsedTime * rotationSpeed))) % 360);
 	emoteInfo.element.style.transform = `rotate(${emoteInfo.state.rotationDeg}deg)`;
 	
@@ -496,17 +506,17 @@ function animation_spring(emoteInfo, elapsedTime) {
 function start_spring(emoteId) {
 	// randomize base offset and common speed
 	var baseLeftOffset = (document.body.clientWidth/2) + ((Math.random()-0.5)*(document.body.clientWidth/5));
-	var commonSpeedFactor = (Math.random() * 0.3) + 1;
+	var commonSpeedFactor = (Math.random() * 0.5) + 1.5;
 	// randomized delay between projectiles
-	var projectileInterval = (Math.random() * 100) + 50;
+	var projectileInterval = (Math.random() * 50) + 50;
 	// randomized projectile count
-	var projectileCount = Math.floor((Math.random() * 10)) + 20;
+	var projectileCount = Math.floor((Math.random() * 10)) + 30;
 	// start individual animations w/ delay
-	var gonneAnimationStart = function() {
+	var springAnimationStart = function() {
 		start_animation_common(emoteId,
 			function(emoteInfo) {
 				// randomize initial direction
-				var direction = ((Math.random()-0.5) * Math.PI/8) - (Math.PI/2);
+				var direction = ((Math.random()-0.5) * Math.PI/12) - (Math.PI/2);
 				var commonSpeedX = Math.cos(direction) * commonSpeedFactor;
 				var commonSpeedY = Math.sin(direction) * commonSpeedFactor;
 				// init state
@@ -523,11 +533,149 @@ function start_spring(emoteId) {
 				emoteInfo.setElementPosition();
 			},
 			animation_spring,
-			0.2);
+			0.3);
 		};
 	for (var i = 0; i < projectileCount; ++i)
 	{
-		setTimeout(gonneAnimationStart, i * projectileInterval);
+		setTimeout(springAnimationStart, i * projectileInterval);
+	}
+}
+
+
+/*
+ * Perform the animation
+ * @param emoteInfo Contains all the info we need to track the emote
+ * @param elapsedTime Elapsed time since last frame redraw in milliseconds
+ */
+function animation_train(emoteInfo, elapsedTime) {
+	// check if animation has finished
+	if ((emoteInfo.state.speedX == 0)
+		|| ((emoteInfo.state.speedX > 0) && (emoteInfo.left > document.body.clientWidth))
+		|| ((emoteInfo.state.speedX < 0) && (emoteInfo.left < -emoteInfo.element.clientWidth))) {
+		// train has a chance to lap
+		++emoteInfo.state.lap;
+		if (Math.random() < 1/emoteInfo.state.lap) {
+			// invert speed
+			emoteInfo.state.speedX *= -1;
+			// mirror train
+			if ((emoteInfo.state.lap % 2) == 1) {
+				// odd lap: not mirrored
+				emoteInfo.element.style.transform = 'revert';
+			} else {
+				// even lap: mirrored
+				emoteInfo.element.style.transform = 'scaleX(-1)';
+			}
+		} else {
+			// no extra lap, end and clean up
+			finish_animation(emoteInfo);
+			return;
+		}
+	}
+	
+	// increment step
+	emoteInfo.state.step += elapsedTime;
+	
+	// update location
+	emoteInfo.left += elapsedTime * emoteInfo.state.speedX;
+	emoteInfo.setElementPosition();
+	
+	// animate individual carts
+	var rotation = Math.cos(emoteInfo.state.step/400) * 5;
+	var elevationOdd = (Math.sin(emoteInfo.state.step/200)-1) * 10;
+	var elevationEven = -20 - elevationOdd;
+	var carts = Array.from(emoteInfo.element.childNodes);
+	carts.forEach(function(item, index, array)
+		{
+			if ((index % 2) == 1) {
+				item.style.transform = `rotate(${rotation}deg) translateY(${elevationOdd}px)`;
+			} else {
+				item.style.transform = `rotate(${rotation}deg) translateY(${elevationEven}px)`;
+			}
+		}
+	);
+	
+	// continue animation on next frame redraw
+	continue_animation(emoteInfo, animation_train);
+}
+
+/*
+ * Start the animation
+ */
+function start_train() {
+	// randomize initial direction and common speed
+	var leftToRight = Math.random() < 0.5;
+	var commonSpeedX = (Math.random() * 0.1) + 0.3;
+	if (leftToRight) { commonSpeedX *= -1; }
+
+	// set up special animation w/ train container of multiple emotes
+	var emoteInfo = Object.create(PEmoteInfo);
+	var emoteContainer = document.createElement('div');
+	if (emoteContainer) {
+		emoteInfo.element = emoteContainer;
+		emoteContainer.classList.add('train');
+		document.body.appendChild(emoteContainer);
+		
+		// reverse list, last addition is locomotive
+		if (leftToRight) { g_trainCarts.reverse(); }
+		// add all carts to container
+		g_trainCarts.forEach(function(item, index, array)
+			{
+				var emote = document.createElement('img');
+				if (emote) {
+					if ((leftToRight && (index == 0))
+						|| (!leftToRight && (index == array.length-1))) {
+						emote.classList.add('locomotive');
+					} else {
+						emote.classList.add('cart');
+					}
+					emote.src = `https://static-cdn.jtvnw.net/emoticons/v2/${item}/default/dark/3.0`;
+					emote.style.left = (index * emoteInfo.size) + 'px';
+					emoteContainer.appendChild(emote);
+				}
+			}
+		);
+		// clear pending cart list
+		g_trainCarts = [];
+		
+		// set base size as height only, width is dynamic
+		emoteInfo.size = gc_emoteBaseSizePx;
+		emoteContainer.style.height = emoteInfo.size + 'px';
+		
+		// set initial position; if going right, clientWidth is not available yet, so we overestimate
+		emoteInfo.top = document.body.clientHeight - emoteInfo.size;
+		emoteInfo.left = leftToRight ? document.body.clientWidth : -(gc_trainThreshold*gc_emoteBaseSizePx);
+		emoteInfo.setElementPosition();
+		
+		// initial state
+		emoteInfo.state = {
+			step: 0, // elapsed time counter
+			speedX: commonSpeedX, // vertical train speed
+			lap: 1 // lap counter for decreasing chance of extra lap
+		};
+		
+		continue_animation(emoteInfo, animation_train);
+	}
+}
+
+/*
+ * Add an emote to the pending train cart list;
+ * start the train if the threshold is reached.
+ * @param emoteId Twitch emote ID for image URL
+ */
+function addTrainCart(emoteId) {
+	g_trainCarts.push(emoteId);
+	if (g_trainCarts.length >= gc_trainThreshold) {
+		start_train();
+	}
+}
+
+/*
+ * Roll the wheel for a chance to add the given emote to the pending train card list!
+ * @param emoteId Twitch emote ID for image URL
+ */
+function trainCartLottery(emoteId) {
+	if (Math.random() < gc_trainCartChance) {
+		addTrainCart(emoteId);
 	}
 }
 
@@ -573,7 +721,22 @@ function start_random(emoteId) {
  * Test emote stuff
  */
 function test() {
-	start_random('emotesv2_b7c104b7df764573b503257a8965631f');
+	//start_random('emotesv2_b7c104b7df764573b503257a8965631f');
+	//start_gonne('emotesv2_b7c104b7df764573b503257a8965631f');
+	
+	// set up train carts
+	g_trainCarts = ['302303593',
+	'302303601',
+	'301591742',
+	'emotesv2_d7b9f42c6c2a4cffa854847170cd610d',
+	'307042831',
+	'emotesv2_2edd7104f35d422fa79adbd4ef2a2f5d',
+	'emotesv2_f9248debce7640ec90f681d0fc5aa024',
+	'307070118',
+	'emotesv2_c5b61b5444334e27b4c65a37b2dc9476',
+	'emotesv2_b7c104b7df764573b503257a8965631f'];
+	// start train
+	start_train();
 }
 
 /*
@@ -606,6 +769,8 @@ function emote_wall(data)
 		start_random(data.emote);
 		break;
 	}
+	// also play the train cart lottery
+	trainCartLottery(data.emote);
 }
 
 /*
@@ -632,8 +797,8 @@ function cb_websocket_onopen(event) {
  */
 function cb_websocket_onclose(event) {
 	setNoConnectionVisible(true);
-	// reconnect
-	connect_websocket(true);
+	// try to reconnect
+	connect_websocket();
 }
 
 /*
@@ -642,7 +807,6 @@ function cb_websocket_onclose(event) {
 function cb_websocket_onmessage(event) {
 	// handle JSON message
 	const message = JSON.parse(event.data);
-	console.info(message);
 	if (message && message.intent) {
 		switch (message.intent) {
 		case 'HELLO':
@@ -662,20 +826,14 @@ function cb_websocket_onmessage(event) {
 
 /*
  * Connect to the websocket server
- * @param bDoDelay if true, delay by the configured interval before trying to connect
  */
-function connect_websocket(bDoDelay) {
-	if (bDoDelay) {
-		setTimeout(function() {
-			connect_websocket(false);
-		}, gc_webSocketConnectIntervalMs);
-		return;
+function connect_websocket() {
+	if (gc_webSocketServerEnabled) {
+		g_webSocket = new WebSocket(gc_urlWebsocket);
+		g_webSocket.onopen = cb_websocket_onopen;
+		g_webSocket.onclose = cb_websocket_onclose;
+		g_webSocket.onmessage = cb_websocket_onmessage;
 	}
-	g_webSocket = new WebSocket(gc_urlWebsocket);
-	g_webSocket.onopen = cb_websocket_onopen;
-	g_webSocket.onclose = cb_websocket_onclose;
-	g_webSocket.onerror = cb_websocket_onclose;
-	g_webSocket.onmessage = cb_websocket_onmessage;
 }
 
 /*
@@ -685,15 +843,12 @@ function init() {
 	// set target host info
 	var targetHostElement = document.getElementById('targetHost');
 	if (targetHostElement) {
-		if (gc_webSocketServerEnabled)
-		{
+		if (gc_webSocketServerEnabled) {
 			targetHostElement.innerHTML = gc_urlWebsocket;
 		} else {
 			targetHostElement.innerHTML = "WebSocket connection disabled.";
 		}
 	}
 	// set up websocket
-	if (gc_webSocketServerEnabled) {
-		connect_websocket(false);
-	}
+	connect_websocket();
 }

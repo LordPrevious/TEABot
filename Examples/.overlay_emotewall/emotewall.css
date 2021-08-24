@@ -16,6 +16,29 @@ html, body
 	transform-origin: 50% 50%;
 }
 
+.train
+{
+	z-index: 20;
+	position: absolute;
+	width: fit-content;
+	white-space: nowrap;
+	transform-origin: 50% 50%;
+}
+.cart, .locomotive
+{
+	object-fit: cover;
+	transform-origin: 50% 50%;
+	margin: 5px;
+}
+.cart
+{
+	height: 75%;
+}
+.locomotive
+{
+	height: 100%;
+}
+
 #noConnection
 {
 	z-index: 20;
