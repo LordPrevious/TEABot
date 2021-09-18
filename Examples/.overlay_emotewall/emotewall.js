@@ -560,7 +560,7 @@ function animation_train(emoteInfo, elapsedTime) {
 			// mirror train
 			if ((emoteInfo.state.lap % 2) == 1) {
 				// odd lap: not mirrored
-				emoteInfo.element.style.transform = 'revert';
+				emoteInfo.element.style.transform = 'scaleX(1)';
 			} else {
 				// even lap: mirrored
 				emoteInfo.element.style.transform = 'scaleX(-1)';
