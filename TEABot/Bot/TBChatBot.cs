@@ -91,9 +91,7 @@ namespace TEABot.Bot
         public void ReloadScripts(string a_rootDirectory)
         {
             // remove old global scripts
-            Global.CommandScripts.Clear();
-            Global.RegexScripts.Clear();
-            Global.PeriodicScripts.Clear();
+            Global.ClearScripts();
 
             // load global scripts
             LoadScripts(a_rootDirectory, Global);
@@ -103,9 +101,7 @@ namespace TEABot.Bot
                 (la_channel, la_directory) =>
                 {
                     // remove old channel scripts
-                    la_channel.CommandScripts.Clear();
-                    la_channel.RegexScripts.Clear();
-                    la_channel.PeriodicScripts.Clear();
+                    la_channel.ClearScripts();
                     // load channel scripts
                     LoadScripts(la_directory, la_channel);
                 });

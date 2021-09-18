@@ -66,5 +66,16 @@ namespace TEABot.Bot
         /// Timestamps for the last couple of sent messages for flood control
         /// </summary>
         public List<DateTime> SendTimestamps = new();
+
+        /// <summary>
+        /// Clear all scripts, e.g. prior to recompiling them
+        /// </summary>
+        public void ClearScripts()
+        {
+            CommandScripts.Clear();
+            RegexScripts.Clear();
+            PeriodicScripts.Clear();
+            TwitchEmoteScripts.Clear();
+        }
     }
 }
