@@ -90,6 +90,9 @@ namespace TEABot.Bot
         /// <param name="a_rootDirectory">The bot configuration root directory</param>
         public void ReloadScripts(string a_rootDirectory)
         {
+            // cancel all running script tasks
+            CancelExecutorTasks();
+
             // remove old global scripts
             Global.ClearScripts();
 
@@ -104,6 +107,11 @@ namespace TEABot.Bot
                     la_channel.ClearScripts();
                     // load channel scripts
                     LoadScripts(la_directory, la_channel);
+                    // start periodic execution
+                    if (la_channel.Joined)
+                    {
+                        StartPeriodicScriptExecution(la_channel);
+                    }
                 });
         }
 
@@ -112,9 +120,8 @@ namespace TEABot.Bot
         /// </summary>
         public void Cancel()
         {
-            mCTSource.Cancel();
-            // create a new token source for new async tasks
-            mCTSource = new CancellationTokenSource();
+            CancelExecutorTasks();
+            CancelConnectionTasks();
         }
 
         /// <summary>
@@ -195,7 +202,7 @@ namespace TEABot.Bot
 
             // connect to server
             mConnection.Connect(Global.Configuration.Host, (ushort)Global.Configuration.Port,
-                Global.Configuration.SSL, mCTSource.Token);
+                Global.Configuration.SSL, mCtsConnections.Token);
 
             if (Global.Configuration.UseWebSocketServer)
             {
@@ -300,7 +307,7 @@ namespace TEABot.Bot
 
             // reconnect to IRC host
             mConnection.Connect(Global.Configuration.Host, (ushort)Global.Configuration.Port,
-                Global.Configuration.SSL, mCTSource.Token);
+                Global.Configuration.SSL, mCtsConnections.Token);
             mConnectionStatus.IrcClientRunning = true;
             RaiseConnectionStatusChanged();
         }
@@ -393,9 +400,14 @@ namespace TEABot.Bot
         #region Private data
 
         /// <summary>
-        /// Used to cancel running tasks on exit
+        /// Used to cancel running tasks for script execution
         /// </summary>
-        private CancellationTokenSource mCTSource = new();
+        private CancellationTokenSource mCtsScripts = new();
+
+        /// <summary>
+        /// Used to cancel running tasks for connections
+        /// </summary>
+        private CancellationTokenSource mCtsConnections = new();
 
         /// <summary>
         /// Maximal time for regex pattern matching when checking chat messages for script triggers
@@ -754,7 +766,7 @@ namespace TEABot.Bot
         /// <param name="a_twitchTags">Optional twitch tags, may be null</param>
         private void ExecuteScript(TBChannel a_channel, TSCompiledScript a_script, string a_sender, string a_arguments, TTwMessageTags a_twitchTags)
         {
-            var executor = new TBTaskedExecutor(mStorage, mHurler, mLists, a_twitchTags, a_channel, a_script, a_arguments, a_sender, mCTSource.Token);
+            var executor = new TBTaskedExecutor(mStorage, mHurler, mLists, a_twitchTags, a_channel, a_script, a_arguments, a_sender, mCtsScripts.Token);
             if (executor.InitializeContext())
             {
                 executor.Broadcaster.Context = a_channel;
@@ -785,7 +797,7 @@ namespace TEABot.Bot
         {
             if (a_script.Interval > 0)
             {
-                var executor = new TBTaskedExecutor(mStorage, mHurler, mLists, null, a_channel, a_script, String.Empty, String.Empty, mCTSource.Token);
+                var executor = new TBTaskedExecutor(mStorage, mHurler, mLists, null, a_channel, a_script, String.Empty, String.Empty, mCtsScripts.Token);
                 if (executor.InitializeContext())
                 {
                     executor.Broadcaster.Context = a_channel;
@@ -798,6 +810,26 @@ namespace TEABot.Bot
             {
                 OnError?.Invoke(a_channel, "Cannot periodically execute script without specified interval");
             }
+        }
+
+        /// <summary>
+        /// Cancel running executors
+        /// </summary>
+        public void CancelExecutorTasks()
+        {
+            mCtsScripts.Cancel();
+            // create a new token source for new async tasks
+            mCtsScripts = new CancellationTokenSource();
+        }
+
+        /// <summary>
+        /// Cancel running executors
+        /// </summary>
+        public void CancelConnectionTasks()
+        {
+            mCtsConnections.Cancel();
+            // create a new token source for new async tasks
+            mCtsConnections = new CancellationTokenSource();
         }
 
         /// <summary>
@@ -883,7 +915,7 @@ namespace TEABot.Bot
         /// <param name="a_delaySeconds">The delay in seconds</param>
         private async Task SendMessageDelayed(TBChannel a_channel, string a_message, bool a_manual, long a_delaySeconds)
         {
-            await Task.Delay(TimeSpan.FromSeconds(a_delaySeconds), mCTSource.Token);
+            await Task.Delay(TimeSpan.FromSeconds(a_delaySeconds), mCtsScripts.Token);
             SendMessage(a_channel, a_message, a_manual);
         }
 
