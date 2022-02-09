@@ -1,0 +1,50 @@
+script Emote Wall
+description Hurls emotes over to the overlay for an emote wall
+special twitch:emotes
+
+##################################################
+
+# emote trigger supports optional parameters;
+# emotes are stripped from the message before parsing arguments
+optional style
+type string
+default RANDOM
+description Animation style for the emotes
+
+##################################################
+# How-To:
+# Open the Emote Wall overlay file as a browser source in OBS - or in the browser of your choice:
+# .overlay_emotewall/emotewall.html
+# 
+# Twitch IRC Extensions & Tag Parsing must be enabled via your global config.tss:
+# twitchCaps=ON
+# 
+# Whenever someone uses a Twitch Emote in their chat message, it will be displayed on the
+# Emote wall. Special magic words can be used to trigger a specific animation; otherwise,
+# one will be picked randomly.
+##################################################
+
+# prepare common projectile data
+store !projectile.intent "EMOTE_WALL
+# forward any style value, JS side will fall back to a default on unknowns
+store !projectile.style ?style
+
+# walk shuffled emote list
+list:load #emotes
+list:shuffle
+# start looping
+list:first !emote.*
+@sendEmote
+	# check for end of list
+	jump @endEmoteList $list.outOfBounds
+	# construct projectile
+	store !projectile.emote !emote.id
+	# send to overlay
+	hurl !projectile.*
+	# continue walking
+	list:next !emote.*
+	jump @sendEmote 1
+@endEmoteList
+
+# done!
+end
